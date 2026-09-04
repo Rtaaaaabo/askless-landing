@@ -414,6 +414,8 @@
 
   .form-status.success { color: #9fd8a0; }
 
+  .form-status.error { color: #e2a2a2; }
+
   footer {
     padding: 32px 0 48px;
     font-size: 13px;
@@ -555,8 +557,8 @@
       <h2>SaaS版、先行アクセスを受け付けています</h2>
       <p>正式リリースに先立って、案内をお送りします。導入のご相談も歓迎です。</p>
     </div>
-    <form class="form-row" id="waitlist-form">
-      <input type="email" id="waitlist-email" placeholder="you@example.com" required aria-label="メールアドレス">
+    <form class="form-row" id="waitlist-form" action="https://formspree.io/f/mvkoqrdq" method="POST">
+      <input type="email" name="email" id="waitlist-email" placeholder="you@example.com" required aria-label="メールアドレス">
       <button type="submit" class="btn-primary">先行アクセスに登録する</button>
     </form>
     <p class="form-status" id="form-status" role="status"></p>
@@ -569,21 +571,46 @@
 </footer>
 
 <script>
-  // NOTE: このフォームはデモ実装です。実際に運用する際は、
-  // action属性にGoogle FormsやFormspreyなどの送信先URLを設定するか、
-  // fetch()でご自身のエンドポイントに送信するよう置き換えてください。
   const form = document.getElementById('waitlist-form');
   const status = document.getElementById('form-status');
+  const submitBtn = form.querySelector('button[type="submit"]');
 
   form.addEventListener('submit', function (e) {
     e.preventDefault();
     const email = document.getElementById('waitlist-email').value;
     if (!email) return;
 
-    // ここに実際の送信処理（Google Forms / Formspree / 自前API等）を実装してください。
-    status.textContent = '登録ありがとうございます。準備が整い次第、' + email + ' 宛にご案内します。';
-    status.classList.add('success');
-    form.reset();
+    submitBtn.disabled = true;
+    status.classList.remove('success', 'error');
+    status.textContent = '送信しています…';
+
+    fetch(form.action, {
+      method: 'POST',
+      body: new FormData(form),
+      headers: { 'Accept': 'application/json' }
+    })
+      .then(function (response) {
+        if (response.ok) {
+          status.textContent = '登録ありがとうございます。準備が整い次第、' + email + ' 宛にご案内します。';
+          status.classList.add('success');
+          form.reset();
+        } else {
+          return response.json().then(function (data) {
+            const message = (data && data.errors && data.errors.length)
+              ? data.errors.map(function (err) { return err.message; }).join(' ')
+              : '送信に失敗しました。時間をおいて再度お試しください。';
+            status.textContent = message;
+            status.classList.add('error');
+          });
+        }
+      })
+      .catch(function () {
+        status.textContent = '通信エラーが発生しました。時間をおいて再度お試しください。';
+        status.classList.add('error');
+      })
+      .finally(function () {
+        submitBtn.disabled = false;
+      });
   });
 </script>
 
