@@ -1,0 +1,591 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Askless — 「バグですか？仕様ですか？」を、聞かれる前に。</title>
+<meta name="description" content="マージされたPRから機能仕様ドキュメントを自動生成し、CS・QAが読める形で保守するツール、Askless。SaaS版の先行アクセスを受付中。">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Shippori+Mincho:wght@400;500;600;800&family=Zen+Kaku+Gothic+New:wght@400;500;700;900&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --paper: #eef1f4;
+    --paper-raised: #e2e7ec;
+    --ink: #16202c;
+    --ink-soft: #50606f;
+    --blue: #3d6ea5;
+    --blue-deep: #294b73;
+    --blue-secondary: #365d78;
+    --rule: #cfd8e0;
+    --panel-dark: #16202c;
+    --panel-text: #e3e9ee;
+    --max: 960px;
+  }
+
+  * { box-sizing: border-box; }
+
+  html { scroll-behavior: smooth; }
+
+  body {
+    margin: 0;
+    background: var(--paper);
+    color: var(--ink);
+    font-family: 'Zen Kaku Gothic New', sans-serif;
+    line-height: 1.85;
+    font-size: 16px;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  h1, h2, h3 {
+    font-family: 'Shippori Mincho', serif;
+    color: var(--ink);
+    margin: 0;
+    line-height: 1.5;
+  }
+
+  a { color: inherit; }
+
+  .wrap {
+    max-width: var(--max);
+    margin: 0 auto;
+    padding: 0 28px;
+  }
+
+  code, .mono {
+    font-family: 'JetBrains Mono', monospace;
+  }
+
+  /* ---------- header ---------- */
+
+  header {
+    padding: 28px 0;
+  }
+
+  header .wrap {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  .logo {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 15px;
+    font-weight: 600;
+    letter-spacing: 0.02em;
+  }
+
+  header nav a {
+    font-size: 14px;
+    text-decoration: none;
+    color: var(--ink-soft);
+    border-bottom: 1px solid var(--rule);
+    padding-bottom: 2px;
+    transition: border-color 0.15s ease, color 0.15s ease;
+  }
+
+  header nav a:hover {
+    color: var(--ink);
+    border-color: var(--ink);
+  }
+
+  /* ---------- hero ---------- */
+
+  .hero {
+    padding: 40px 0 72px;
+  }
+
+  .hero h1 {
+    font-size: clamp(28px, 4.6vw, 44px);
+    font-weight: 600;
+    max-width: 15ch;
+  }
+
+  .hero .kicker-line {
+    display: block;
+  }
+
+  .hero p.lede {
+    margin-top: 22px;
+    max-width: 46ch;
+    font-size: 17px;
+    color: var(--ink-soft);
+  }
+
+  .hero .cta-row {
+    margin-top: 32px;
+    display: flex;
+    gap: 14px;
+    flex-wrap: wrap;
+    align-items: center;
+  }
+
+  .btn-primary {
+    display: inline-block;
+    background: var(--ink);
+    color: var(--paper);
+    padding: 14px 26px;
+    text-decoration: none;
+    font-size: 15px;
+    font-weight: 500;
+    border: 1px solid var(--ink);
+    cursor: pointer;
+    font-family: 'Zen Kaku Gothic New', sans-serif;
+    transition: background 0.15s ease, color 0.15s ease;
+  }
+
+  .btn-primary:hover { background: var(--blue-deep); border-color: var(--blue-deep); }
+
+  .cta-note {
+    font-size: 13px;
+    color: var(--ink-soft);
+  }
+
+  /* ---------- transform diagram ---------- */
+
+  .transform {
+    margin-top: 56px;
+    display: grid;
+    grid-template-columns: 1fr auto 1fr;
+    gap: 0;
+    align-items: stretch;
+    border: 1px solid var(--rule);
+  }
+
+  .transform .panel {
+    padding: 22px 24px;
+  }
+
+  .transform .panel-label {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 0.03em;
+    margin-bottom: 14px;
+    display: block;
+  }
+
+  .panel-code {
+    background: var(--panel-dark);
+    color: var(--panel-text);
+  }
+
+  .panel-code .panel-label { color: #8fa0b0; }
+
+  .panel-code pre {
+    margin: 0;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12.5px;
+    line-height: 1.9;
+    white-space: pre-wrap;
+    word-break: break-word;
+  }
+
+  .panel-code .add { color: #9fd8a0; }
+  .panel-code .del { color: #d89f9f; text-decoration: line-through; opacity: 0.7; }
+  .panel-code .comment { color: #6f7e8c; }
+
+  .panel-doc {
+    background: var(--paper-raised);
+  }
+
+  .panel-doc .panel-label { color: var(--blue-deep); }
+
+  .panel-doc h4 {
+    font-family: 'Shippori Mincho', serif;
+    font-size: 16px;
+    margin: 0 0 8px;
+  }
+
+  .panel-doc p {
+    font-size: 13.5px;
+    margin: 0 0 10px;
+    color: var(--ink-soft);
+  }
+
+  .panel-doc ul {
+    margin: 0;
+    padding-left: 18px;
+    font-size: 13.5px;
+    color: var(--ink-soft);
+  }
+
+  .transform .arrow-col {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--paper);
+    padding: 0 10px;
+    border-left: 1px solid var(--rule);
+    border-right: 1px solid var(--rule);
+  }
+
+  .arrow-col svg { width: 26px; height: 26px; }
+
+  @media (max-width: 720px) {
+    .transform { grid-template-columns: 1fr; }
+    .transform .arrow-col { border-left: none; border-right: none; border-top: 1px solid var(--rule); border-bottom: 1px solid var(--rule); padding: 10px 0; }
+    .arrow-col svg { transform: rotate(90deg); }
+  }
+
+  /* ---------- section shared ---------- */
+
+  section {
+    padding: 64px 0;
+    border-top: 1px solid var(--rule);
+  }
+
+  section .section-head {
+    max-width: 52ch;
+    margin-bottom: 36px;
+  }
+
+  section .section-head h2 {
+    font-size: clamp(22px, 3vw, 28px);
+    font-weight: 500;
+  }
+
+  section .section-head p {
+    margin-top: 12px;
+    color: var(--ink-soft);
+    font-size: 15px;
+  }
+
+  /* ---------- pain list ---------- */
+
+  .pain-list {
+    display: grid;
+    gap: 0;
+    max-width: 640px;
+  }
+
+  .pain-item {
+    padding: 20px 0 20px 22px;
+    border-left: 2px solid var(--rule);
+    font-size: 16px;
+    color: var(--ink);
+  }
+
+  .pain-item + .pain-item { margin-top: 2px; }
+
+  .pain-item strong {
+    font-weight: 700;
+  }
+
+  /* ---------- process ---------- */
+
+  .process {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 28px;
+  }
+
+  @media (max-width: 720px) {
+    .process { grid-template-columns: 1fr; }
+  }
+
+  .process-step {
+    padding-top: 18px;
+    border-top: 1px solid var(--rule);
+  }
+
+  .process-step .num {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 13px;
+    color: var(--blue-deep);
+    display: block;
+    margin-bottom: 10px;
+  }
+
+  .process-step h3 {
+    font-size: 17px;
+    font-weight: 500;
+    margin-bottom: 8px;
+  }
+
+  .process-step p {
+    font-size: 14.5px;
+    color: var(--ink-soft);
+    margin: 0;
+  }
+
+  /* ---------- before/after ---------- */
+
+  table.compare {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 14.5px;
+    max-width: 680px;
+  }
+
+  table.compare th, table.compare td {
+    text-align: left;
+    padding: 14px 16px;
+    border-bottom: 1px solid var(--rule);
+    vertical-align: top;
+  }
+
+  table.compare th {
+    font-family: 'JetBrains Mono', monospace;
+    font-weight: 500;
+    font-size: 12px;
+    letter-spacing: 0.02em;
+    color: var(--ink-soft);
+  }
+
+  table.compare td:first-child { color: var(--ink-soft); }
+  table.compare td:last-child { color: var(--ink); }
+
+  /* ---------- proof ---------- */
+
+  .proof-list {
+    display: flex;
+    gap: 32px;
+    flex-wrap: wrap;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 14px;
+    color: var(--ink-soft);
+  }
+
+  .proof-list a { text-decoration: none; border-bottom: 1px solid var(--rule); }
+  .proof-list a:hover { color: var(--ink); border-color: var(--ink); }
+
+  .proof-note {
+    margin-top: 20px;
+    font-size: 14px;
+    color: var(--ink-soft);
+    max-width: 56ch;
+  }
+
+  /* ---------- waitlist ---------- */
+
+  #waitlist {
+    background: var(--ink);
+    color: var(--paper);
+  }
+
+  #waitlist .section-head h2,
+  #waitlist .section-head p {
+    color: var(--paper);
+  }
+
+  #waitlist .section-head p { color: #9fadb8; }
+
+  .form-row {
+    display: flex;
+    gap: 10px;
+    max-width: 460px;
+    flex-wrap: wrap;
+  }
+
+  #waitlist input[type="email"] {
+    flex: 1 1 240px;
+    padding: 14px 16px;
+    font-size: 15px;
+    border: 1px solid #3a4552;
+    background: #202b38;
+    color: var(--paper);
+    font-family: 'Zen Kaku Gothic New', sans-serif;
+  }
+
+  #waitlist input[type="email"]::placeholder { color: #7c8a97; }
+
+  #waitlist input[type="email"]:focus,
+  #waitlist button:focus-visible,
+  header nav a:focus-visible,
+  .btn-primary:focus-visible {
+    outline: 2px solid var(--blue);
+    outline-offset: 2px;
+  }
+
+  #waitlist .btn-primary {
+    background: var(--blue);
+    border-color: var(--blue);
+    color: var(--paper);
+  }
+
+  #waitlist .btn-primary:hover { background: #5a8cc0; border-color: #5a8cc0; }
+
+  .form-status {
+    margin-top: 14px;
+    font-size: 13.5px;
+    color: #9fadb8;
+    min-height: 18px;
+  }
+
+  .form-status.success { color: #9fd8a0; }
+
+  footer {
+    padding: 32px 0 48px;
+    font-size: 13px;
+    color: var(--ink-soft);
+    display: flex;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
+  footer a { text-decoration: none; border-bottom: 1px solid var(--rule); }
+
+  @media (prefers-reduced-motion: reduce) {
+    html { scroll-behavior: auto; }
+    * { transition: none !important; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="wrap">
+    <div class="logo">Askless</div>
+    <nav><a href="#waitlist">先行アクセス登録</a></nav>
+  </div>
+</header>
+
+<div class="hero wrap">
+  <h1>
+    <span class="kicker-line">「これ、バグですか？</span>
+    <span class="kicker-line">仕様ですか？」</span>
+  </h1>
+  <p class="lede">
+    その質問、もう何回目ですか。生成AIで実装スピードが上がった分、CSやQAが仕様を追いきれず、開発への問い合わせが集中していませんか。Asklessは、マージされたPRから機能仕様ドキュメントを自動生成し、誰でも読める形で保守します。
+  </p>
+  <div class="cta-row">
+    <a class="btn-primary" href="#waitlist">先行アクセスに登録する</a>
+    <span class="cta-note">SaaS版を準備中。今はOSSとして公開中です。</span>
+  </div>
+
+  <div class="transform">
+    <div class="panel panel-code">
+      <span class="panel-label">merged pull request</span>
+      <pre><span class="comment">// checkout.ts</span>
+<span class="del">- if (cart.total > 0) applyTax();</span>
+<span class="add">+ if (cart.total > 0 && !cart.isGift) {</span>
+<span class="add">+   applyTax();</span>
+<span class="add">+ }</span>
+<span class="comment">// #482 ギフト注文を非課税に</span></pre>
+    </div>
+    <div class="arrow-col">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M4 12h16M14 6l6 6-6 6"/></svg>
+    </div>
+    <div class="panel panel-doc">
+      <span class="panel-label">生成される仕様</span>
+      <h4>ギフト注文の非課税処理</h4>
+      <p>カート内の商品が「ギフト」指定の場合、税額計算をスキップする。</p>
+      <ul>
+        <li>対象: <code>cart.isGift = true</code> の注文</li>
+        <li>根拠PR: #482</li>
+        <li>最終更新: マージ日時に自動追従</li>
+      </ul>
+    </div>
+  </div>
+</div>
+
+<section id="pain">
+  <div class="wrap">
+    <div class="section-head">
+      <h2>心当たり、ありませんか</h2>
+      <p>実装が速くなるほど、置いていかれるのはいつもドキュメントです。</p>
+    </div>
+    <div class="pain-list">
+      <div class="pain-item"><strong>仕様書を書く時間が、実装の速度に追いつかない。</strong></div>
+      <div class="pain-item"><strong>気づけば自分が、CSとQAの問い合わせ窓口になっている。</strong></div>
+      <div class="pain-item"><strong>同じ質問にSlackで何度も同じ説明をしている。</strong></div>
+      <div class="pain-item"><strong>半年前の仕様書を開いたら、もう実装と合っていなかった。</strong></div>
+    </div>
+  </div>
+</section>
+
+<section id="how">
+  <div class="wrap">
+    <div class="section-head">
+      <h2>仕組みはシンプルです</h2>
+      <p>PRをマージするだけで、ドキュメントは後からついてきます。</p>
+    </div>
+    <div class="process">
+      <div class="process-step">
+        <span class="num">01</span>
+        <h3>PRがマージされる</h3>
+        <p>普段通り開発を進めるだけで構いません。特別な作業は増えません。</p>
+      </div>
+      <div class="process-step">
+        <span class="num">02</span>
+        <h3>機能仕様を自動生成</h3>
+        <p>差分の内容から、根拠のある記述だけをドキュメント化します。推測では書きません。</p>
+      </div>
+      <div class="process-step">
+        <span class="num">03</span>
+        <h3>CS・QAが直接参照</h3>
+        <p>開発に聞かなくても、いま何がどう動くのかをドキュメントで確認できます。</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="compare">
+  <div class="wrap">
+    <div class="section-head">
+      <h2>導入前後で何が変わるか</h2>
+    </div>
+    <table class="compare">
+      <tr><th>導入前</th><th>導入後</th></tr>
+      <tr><td>質問が来るたびに、コードを読み直して答える</td><td>ドキュメントを見てもらえば済む</td></tr>
+      <tr><td>仕様書は書いた瞬間から古くなっていく</td><td>PRのマージに合わせて自動更新される</td></tr>
+      <tr><td>仕様の知識が特定の人に偏っている</td><td>チーム全員が同じ場所を参照できる</td></tr>
+    </table>
+  </div>
+</section>
+
+<section id="proof">
+  <div class="wrap">
+    <div class="section-head">
+      <h2>実プロジェクトで検証済み</h2>
+    </div>
+    <div class="proof-list">
+      <a href="https://github.com/formbricks/formbricks" target="_blank" rel="noopener">formbricks</a>
+      <a href="https://github.com/documenso/documenso" target="_blank" rel="noopener">documenso</a>
+      <a href="https://github.com/go-gitea/gitea" target="_blank" rel="noopener">gitea</a>
+    </div>
+    <p class="proof-note">Asklessの基盤となっているOSS版spec-bridgeは、これらの実在するプロジェクトのPR履歴に対して動作検証を行っています。詳細はGitHubのREADMEをご覧ください。</p>
+  </div>
+</section>
+
+<section id="waitlist">
+  <div class="wrap">
+    <div class="section-head">
+      <h2>SaaS版、先行アクセスを受け付けています</h2>
+      <p>正式リリースに先立って、案内をお送りします。導入のご相談も歓迎です。</p>
+    </div>
+    <form class="form-row" id="waitlist-form">
+      <input type="email" id="waitlist-email" placeholder="you@example.com" required aria-label="メールアドレス">
+      <button type="submit" class="btn-primary">先行アクセスに登録する</button>
+    </form>
+    <p class="form-status" id="form-status" role="status"></p>
+  </div>
+</section>
+
+<footer class="wrap">
+  <span>Askless — OSS版（spec-bridge）は <a href="https://github.com/Rtaaaaabo/spec-bridge" target="_blank" rel="noopener">GitHub</a> で公開中</span>
+  <span id="waitlist-count-note"></span>
+</footer>
+
+<script>
+  // NOTE: このフォームはデモ実装です。実際に運用する際は、
+  // action属性にGoogle FormsやFormspreyなどの送信先URLを設定するか、
+  // fetch()でご自身のエンドポイントに送信するよう置き換えてください。
+  const form = document.getElementById('waitlist-form');
+  const status = document.getElementById('form-status');
+
+  form.addEventListener('submit', function (e) {
+    e.preventDefault();
+    const email = document.getElementById('waitlist-email').value;
+    if (!email) return;
+
+    // ここに実際の送信処理（Google Forms / Formspree / 自前API等）を実装してください。
+    status.textContent = '登録ありがとうございます。準備が整い次第、' + email + ' 宛にご案内します。';
+    status.classList.add('success');
+    form.reset();
+  });
+</script>
+
+</body>
+</html>
