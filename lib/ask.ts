@@ -29,8 +29,14 @@ export interface AskAnswer {
 
 const MODEL = process.env.DEMO_ASK_MODEL ?? "claude-opus-5";
 
-/** 1回の回答に使える出力トークン。要件の「1回あたり max_tokens を制限する」。 */
-const MAX_TOKENS = Number(process.env.DEMO_MAX_TOKENS ?? 2000);
+/**
+ * 1回の回答に使える出力トークン。要件の「1回あたり max_tokens を制限する」。
+ *
+ * 思考トークンもこの枠を共有する点に注意。枠が小さすぎると思考で使い切り、
+ * JSON が途中で切れて parse に失敗する。引用を数件含む回答の実体は
+ * 1000トークン前後なので、思考のぶんを見込んで余裕を持たせている。
+ */
+const MAX_TOKENS = Number(process.env.DEMO_MAX_TOKENS ?? 4000);
 
 /** 質問文の長さ上限。長文を投げ込まれて入力側の課金が伸びるのを防ぐ。 */
 export const MAX_QUESTION_CHARS = 400;
@@ -175,6 +181,7 @@ export function parseAnswer(text: string): AskAnswer {
 
 export async function ask(question: string, specMarkdown: string): Promise<AskAnswer> {
   const client = new Anthropic();
+  const startedAt = Date.now();
 
   const response = await client.messages.create({
     model: MODEL,
@@ -203,6 +210,22 @@ export async function ask(question: string, specMarkdown: string): Promise<AskAn
   if (response.stop_reason === "refusal") {
     throw new Error("refusal");
   }
+
+  // 枠を使い切ると JSON が途中で切れる。parse の失敗として出ると原因が
+  // 分からないので、ここで名指しにしておく。
+  if (response.stop_reason === "max_tokens") {
+    throw new Error(
+      `出力が max_tokens (${MAX_TOKENS}) に達して途中で切れました。` +
+        "DEMO_MAX_TOKENS を増やしてください。",
+    );
+  }
+
+  // 遅さと枠の消費を後から追えるようにする。質問文と回答は出さない。
+  const usage = response.usage;
+  console.log(
+    `ask: ${Date.now() - startedAt}ms / 入力 ${usage.input_tokens} ` +
+      `(キャッシュ読み ${usage.cache_read_input_tokens ?? 0}) / 出力 ${usage.output_tokens}`,
+  );
 
   const text = response.content
     .filter((block): block is Anthropic.TextBlock => block.type === "text")
