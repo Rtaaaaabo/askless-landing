@@ -1,0 +1,19 @@
+{
+  "name": "askless-landing",
+  "private": true,
+  "type": "module",
+  "engines": {
+    "node": ">=22"
+  },
+  "dependencies": {
+    "@anthropic-ai/sdk": "^0.127.0"
+  },
+  "devDependencies": {
+    "@types/node": "^22.10.0",
+    "typescript": "^5.7.0"
+  },
+  "scripts": {
+    "test": "node --test --experimental-strip-types lib/*.test.ts",
+    "typecheck": "tsc --noEmit -p tsconfig.json"
+  }
+}
