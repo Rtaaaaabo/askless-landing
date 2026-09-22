@@ -1,0 +1,719 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>署名依頼の自動リマインダー — documenso の仕様 | Askless</title>
+<meta name="description" content="Askless が documenso のマージ済みPRから自動生成した機能仕様。すべての記述にソースコードへの出典が付いています。">
+<meta property="og:title" content="署名依頼の自動リマインダー — documenso の仕様">
+<meta property="og:description" content="Askless がマージ済みPRから自動生成した実物の機能仕様。全18件の記述に file:line の出典付き。">
+<meta property="og:type" content="article">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Shippori+Mincho:wght@400;500;600;800&family=Zen+Kaku+Gothic+New:wght@400;500;700;900&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --paper: #eef1f4;
+    --paper-raised: #e2e7ec;
+    --ink: #16202c;
+    --ink-soft: #50606f;
+    --blue: #3d6ea5;
+    --blue-deep: #294b73;
+    --blue-secondary: #365d78;
+    --rule: #cfd8e0;
+    --panel-dark: #16202c;
+    --panel-text: #e3e9ee;
+    --max: 760px;
+  }
+
+  * { box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
+
+  body {
+    margin: 0;
+    background: var(--paper);
+    color: var(--ink);
+    font-family: 'Zen Kaku Gothic New', sans-serif;
+    line-height: 1.85;
+    font-size: 16px;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  h1, h2, h3 {
+    font-family: 'Shippori Mincho', serif;
+    color: var(--ink);
+    margin: 0;
+    line-height: 1.5;
+  }
+
+  a { color: inherit; }
+
+  .wrap {
+    max-width: var(--max);
+    margin: 0 auto;
+    padding: 0 20px;
+  }
+
+  code, .mono { font-family: 'JetBrains Mono', monospace; }
+
+  code {
+    font-size: 0.88em;
+    background: var(--paper-raised);
+    padding: 1px 5px;
+    word-break: break-word;
+  }
+
+  /* ---------- header ---------- */
+
+  header { padding: 22px 0; border-bottom: 1px solid var(--rule); }
+
+  header .wrap {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+  }
+
+  .logo {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 15px;
+    font-weight: 600;
+    letter-spacing: 0.02em;
+    text-decoration: none;
+  }
+
+  header nav a {
+    font-size: 13px;
+    text-decoration: none;
+    color: var(--ink-soft);
+    border-bottom: 1px solid var(--rule);
+    padding-bottom: 2px;
+  }
+
+  header nav a:hover { color: var(--ink); border-color: var(--ink); }
+
+  /* ---------- doc head ---------- */
+
+  .doc-head { padding: 36px 0 28px; }
+
+  .meta-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    align-items: center;
+    margin-bottom: 18px;
+  }
+
+  .badge {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 0.02em;
+    padding: 4px 9px;
+    border: 1px solid var(--rule);
+    background: var(--paper-raised);
+    color: var(--ink-soft);
+    text-decoration: none;
+    white-space: nowrap;
+  }
+
+  .badge-repo { border-color: var(--blue-deep); color: var(--blue-deep); }
+  .badge-repo:hover { background: var(--blue-deep); color: var(--paper); }
+  .badge-status { border-color: #a98b4a; color: #7d6431; background: #f3ecdc; }
+
+  .doc-head h1 {
+    font-size: clamp(25px, 5.2vw, 34px);
+    font-weight: 600;
+  }
+
+  .doc-head .summary {
+    margin-top: 18px;
+    font-size: 16.5px;
+    color: var(--ink-soft);
+  }
+
+  .provenance {
+    margin-top: 26px;
+    border: 1px solid var(--rule);
+    background: var(--paper-raised);
+    padding: 16px 18px;
+    font-size: 13px;
+    color: var(--ink-soft);
+  }
+
+  .provenance strong { color: var(--ink); font-weight: 500; }
+  .provenance a { color: var(--blue-deep); }
+
+  /* ---------- sections ---------- */
+
+  section { padding: 30px 0; border-top: 1px solid var(--rule); }
+
+  section h2 {
+    font-size: 20px;
+    font-weight: 600;
+    margin-bottom: 16px;
+  }
+
+  section p { margin: 0 0 15px; }
+  section p:last-child { margin-bottom: 0; }
+
+  ul.behavior { margin: 0; padding: 0; list-style: none; }
+
+  ul.behavior li {
+    position: relative;
+    padding-left: 20px;
+    margin-bottom: 14px;
+  }
+
+  ul.behavior li::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 0.72em;
+    width: 7px;
+    height: 1px;
+    background: var(--blue);
+  }
+
+  ul.behavior li:last-child { margin-bottom: 0; }
+
+  .rule-list { margin: 0; padding: 0; list-style: none; }
+
+  .rule-list li {
+    border-left: 2px solid var(--rule);
+    padding: 0 0 0 16px;
+    margin-bottom: 18px;
+    font-size: 15px;
+  }
+
+  .rule-list li:last-child { margin-bottom: 0; }
+
+  /* ---------- citations ---------- */
+
+  sup.cite { font-size: 0; white-space: nowrap; }
+
+  sup.cite a {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    line-height: 1;
+    text-decoration: none;
+    color: var(--blue-deep);
+    border: 1px solid var(--rule);
+    background: var(--paper);
+    padding: 2px 4px;
+    margin-left: 3px;
+    vertical-align: super;
+  }
+
+  sup.cite a:hover { background: var(--blue-deep); color: var(--paper); border-color: var(--blue-deep); }
+
+  /* ---------- unknowns ---------- */
+
+  .unknowns { background: var(--paper-raised); border: 1px solid var(--rule); padding: 20px; }
+  .unknowns .lead { font-size: 14px; color: var(--ink-soft); margin-bottom: 16px; }
+  .unknowns ol { margin: 0; padding-left: 20px; font-size: 14.5px; }
+  .unknowns li { margin-bottom: 12px; }
+  .unknowns li:last-child { margin-bottom: 0; }
+
+  /* ---------- details ---------- */
+
+  details {
+    border: 1px solid var(--rule);
+    margin-bottom: 12px;
+    background: var(--paper-raised);
+  }
+
+  details summary {
+    cursor: pointer;
+    padding: 14px 18px;
+    font-size: 14.5px;
+    font-weight: 500;
+    list-style: none;
+    display: flex;
+    justify-content: space-between;
+    gap: 12px;
+    align-items: center;
+  }
+
+  details summary::-webkit-details-marker { display: none; }
+
+  details summary::after {
+    content: '+';
+    font-family: 'JetBrains Mono', monospace;
+    color: var(--ink-soft);
+    font-size: 16px;
+  }
+
+  details[open] summary::after { content: '−'; }
+
+  details summary span.hint {
+    font-size: 12px;
+    color: var(--ink-soft);
+    font-weight: 400;
+    margin-left: auto;
+    margin-right: 6px;
+  }
+
+  .details-body { padding: 0 18px 18px; border-top: 1px solid var(--rule); padding-top: 16px; }
+
+  /* cards instead of wide tables (mobile-safe) */
+
+  .card {
+    border: 1px solid var(--rule);
+    background: var(--paper);
+    padding: 14px 16px;
+    margin-bottom: 10px;
+    font-size: 14px;
+  }
+
+  .card:last-child { margin-bottom: 0; }
+  .card .card-title { font-weight: 500; margin-bottom: 6px; }
+
+  .card .card-path {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11.5px;
+    color: var(--blue-deep);
+    word-break: break-all;
+    display: block;
+    margin-bottom: 6px;
+  }
+
+  .card .card-desc { color: var(--ink-soft); font-size: 13.5px; }
+
+  .tag {
+    display: inline-block;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    padding: 2px 6px;
+    border: 1px solid var(--rule);
+    background: var(--paper-raised);
+    color: var(--ink-soft);
+    margin-right: 6px;
+  }
+
+  .test-group { margin-bottom: 18px; }
+  .test-group:last-child { margin-bottom: 0; }
+
+  .test-group h3 {
+    font-family: 'Zen Kaku Gothic New', sans-serif;
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--ink-soft);
+    margin-bottom: 8px;
+  }
+
+  .test-group ul { margin: 0; padding-left: 20px; font-size: 13.5px; }
+  .test-group li { margin-bottom: 7px; }
+
+  /* ---------- sources ---------- */
+
+  ol.sources { margin: 0; padding-left: 26px; font-size: 12.5px; }
+  ol.sources li { margin-bottom: 7px; word-break: break-all; }
+
+  ol.sources a {
+    font-family: 'JetBrains Mono', monospace;
+    color: var(--blue-deep);
+    text-decoration: none;
+    border-bottom: 1px solid var(--rule);
+  }
+
+  ol.sources a:hover { border-color: var(--blue-deep); }
+
+  /* ---------- chat ---------- */
+
+  .chat { border: 1px solid var(--ink); background: var(--paper-raised); padding: 22px; }
+  .chat h2 { margin-bottom: 8px; }
+  .chat .chat-lead { font-size: 14px; color: var(--ink-soft); margin-bottom: 18px; }
+
+  .examples { display: flex; flex-direction: column; gap: 8px; margin-bottom: 18px; }
+
+  .example {
+    text-align: left;
+    background: var(--paper);
+    border: 1px solid var(--rule);
+    padding: 11px 14px;
+    font-size: 13.5px;
+    font-family: 'Zen Kaku Gothic New', sans-serif;
+    color: var(--ink);
+    cursor: pointer;
+    line-height: 1.6;
+  }
+
+  .example:hover:not(:disabled) { border-color: var(--blue-deep); color: var(--blue-deep); }
+  .example:disabled { cursor: not-allowed; opacity: 0.55; }
+
+  .chat-form { display: flex; gap: 8px; flex-wrap: wrap; }
+
+  .chat-form input {
+    flex: 1 1 200px;
+    padding: 12px 14px;
+    border: 1px solid var(--rule);
+    background: var(--paper);
+    font-family: 'Zen Kaku Gothic New', sans-serif;
+    font-size: 14px;
+    color: var(--ink);
+  }
+
+  .chat-form input:disabled { opacity: 0.55; cursor: not-allowed; }
+
+  .btn-primary {
+    display: inline-block;
+    background: var(--ink);
+    color: var(--paper);
+    padding: 12px 22px;
+    text-decoration: none;
+    font-size: 14px;
+    font-weight: 500;
+    border: 1px solid var(--ink);
+    cursor: pointer;
+    font-family: 'Zen Kaku Gothic New', sans-serif;
+  }
+
+  .btn-primary:hover:not(:disabled) { background: var(--blue-deep); border-color: var(--blue-deep); }
+  .btn-primary:disabled { opacity: 0.55; cursor: not-allowed; }
+
+  .chat-note { font-size: 12.5px; color: var(--ink-soft); margin-top: 14px; }
+
+  /* ---------- cta / footer ---------- */
+
+  .cta-block { text-align: center; padding: 40px 0; border-top: 1px solid var(--rule); }
+  .cta-block h2 { font-size: 19px; margin-bottom: 10px; }
+  .cta-block p { font-size: 14px; color: var(--ink-soft); margin-bottom: 20px; }
+
+  footer {
+    padding: 26px 0 50px;
+    border-top: 1px solid var(--rule);
+    font-size: 12.5px;
+    color: var(--ink-soft);
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    justify-content: space-between;
+  }
+
+  footer a { color: var(--ink-soft); }
+
+  @media (max-width: 600px) {
+    .wrap { padding: 0 16px; }
+    body { font-size: 15.5px; }
+    section { padding: 26px 0; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="wrap">
+    <a class="logo" href="/">Askless</a>
+    <nav><a href="/#waitlist">先行アクセス登録</a></nav>
+  </div>
+</header>
+
+<div class="wrap">
+
+  <div class="doc-head">
+    <div class="meta-row">
+      <a class="badge badge-repo" href="https://github.com/documenso/documenso" target="_blank" rel="noopener">documenso</a>
+      <span class="badge">電子署名サービス</span>
+      <span class="badge badge-status">draft — 未レビュー</span>
+    </div>
+
+    <h1>署名依頼の自動リマインダー</h1>
+
+    <p class="summary">
+      未署名の受信者に対し、一定期間ごとに自動でリマインダーメールを送る機能。1人の受信者に送れる自動リマインダーの回数には上限があり、上限に達すると自動送信は止まるが、送信者が手動で「再送信」すると回数はリセットされ再び自動送信されるようになる。
+    </p>
+
+    <div class="provenance">
+      <strong>この仕様は、実際にマージされたプルリクエストから Askless が自動生成したものです。</strong><br>
+      生成元:
+      <a href="https://github.com/documenso/documenso/pull/3016" target="_blank" rel="noopener">documenso/documenso#3016 — feat: cap automated reminders before resend</a><br>
+      文中の <span class="mono">[1]</span> などの番号は、その記述の根拠になったソースコードの行へのリンクです。すべてクリックして確認できます。
+    </div>
+  </div>
+
+  <section>
+    <h2>概要</h2>
+    <p>書類の署名を依頼したのに相手がなかなか署名してくれない場合、Documenso は自動的に「リマインダー（催促）メール」を送ることができます。いつ最初のリマインダーを送るか、その後どのくらいの間隔で繰り返すかは、書類ごと・チームごと・組織ごとに設定できます。</p>
+    <p>今回の変更で追加されたのは「送りすぎ防止」の仕組みです。同じ受信者に対して自動リマインダーを送れる回数には上限（既定で5回）があり、これに達すると、たとえ書類がまだ有効期限内で未署名であっても、それ以上自動ではリマインダーが送られなくなります。</p>
+    <p>ただし、送信者（書類のオーナーやチームメンバー）が管理画面から手動で「リマインダーを送る（再送信）」を行うと、そのときにリマインダーの送信回数はゼロに戻り、そこからまた自動リマインダーのカウントが始まります。つまり、自動送信が止まってしまった相手でも、担当者が一度手動で背中を押せば、また自動リマインダーの対象に戻ります。</p>
+  </section>
+
+  <section>
+    <h2>ユーザーから見た振る舞い</h2>
+    <ul class="behavior">
+      <li>書類を送付すると、受信者が署名するまで、設定した間隔で自動的にリマインダーメールが送られる。</li>
+      <li>同じ受信者への自動リマインダーは、最大5回送られるとそれ以降は自動では送られなくなる（書類の有効期限が残っていても）。</li>
+      <li>送信者が書類の管理画面から『再送信（リマインダーを送る）』を手動で行うと、その受信者宛てのメールがすぐに送られ、以降の自動リマインダーのカウントは0から数え直される。つまり手動再送信をすれば、上限に達していた受信者にも自動リマインダーが再び送られるようになる。</li>
+      <li>この上限や自動リマインダーの間隔設定は画面上には表示されない。CS/サポート側が『5回目のリマインダー以降届いていない』という問い合わせを受けた場合、まずは上限（既定5回）に達していないか、直近で手動再送信が行われたかを確認する。</li>
+      <li>CCとして追加された人や、既に署名済みの人にはリマインダー（自動・手動とも）は送られない。</li>
+      <li>受信者が期限切れ（有効期限を過ぎている）の場合、自動リマインダーは送られない。</li>
+    </ul>
+  </section>
+
+  <section>
+    <h2>仕様の詳細</h2>
+    <ul class="rule-list">
+      <li>1人の受信者に対して自動送信できるリマインダーの最大回数は5回（<code>MAX_REMINDERS_BEFORE_RESEND</code>）。この回数に達すると、<code>resolveNextReminderAt</code> は null を返し、それ以上自動リマインダーの予定は組まれない。<sup class="cite" data-refs="5,6"></sup></li>
+      <li>自動リマインダー送信ジョブは、受信者を『claim』する際（対象条件に一致するレコードを原子的に更新する際）に reminderCount を1つ増やす。この増加後の値をもとに次回リマインダーの要否を判定するため、5回目のリマインダー送信時点で次回のスケジュールは組まれなくなる。<sup class="cite" data-refs="7,8"></sup></li>
+      <li>自動リマインダーが停止する条件は2つあり、どちらか一方でも満たせば停止する：(1) 最初の送付（sentAt）から <code>MAX_REMINDER_WINDOW_DAYS</code>（30日）を超えた場合、(2) 送信済みリマインダー回数が <code>MAX_REMINDERS_BEFORE_RESEND</code>（5回）に達した場合。<sup class="cite" data-refs="9"></sup></li>
+      <li>送信者が『再送信（redistribute/resend）』を手動で行うと、対象受信者の nextReminderAt を再計算する際に reminderCount を明示的に0へリセットし（<code>resetReminderCount: true</code>）、DBの reminderCount 列も0に更新する。これにより自動リマインダー上限に達していた受信者も再び自動送信の対象になる。<sup class="cite" data-refs="10,11"></sup></li>
+      <li>手動再送信は、対象受信者の sentAt（自動リマインダーの起算日）を再送信時刻に置き換え、lastReminderSentAt を null に戻す。つまり自動リマインダーの30日ウィンドウや『最初のリマインダーまでの日数』の計算も、再送信時点から改めてやり直される。<sup class="cite" data-refs="12"></sup></li>
+      <li>reminderCount は Recipient テーブルの新しいカラムで、既定値は0。マイグレーション追加によりDBスキーマが変更されている。<sup class="cite" data-refs="13,14"></sup></li>
+      <li>書類レベルのリマインダー設定（sendAfter / repeatEvery、または組織・チームからの継承）が変更された場合は <code>recomputeNextReminderForEnvelope</code> が全受信者の nextReminderAt を再計算するが、この際も既存の reminderCount（受信者ごとに保持されている送信済み回数）を考慮したうえで上限判定を行う（設定変更だけでは回数はリセットされない）。<sup class="cite" data-refs="15,16"></sup></li>
+      <li>自動リマインダーは、書類の配布方法が手動（メールを送らないリンク共有方式）の場合や、書類のメール送信設定でリクエストメールが無効の場合、送信者アカウントが無効化されている場合、組織のメール送信数上限に達している場合は送られない（この挙動自体は今回のPRの変更ではなく既存仕様）。<sup class="cite" data-refs="17,18,2,19"></sup></li>
+    </ul>
+  </section>
+
+  <section>
+    <h2>制約・既知の制限</h2>
+    <ul class="behavior">
+      <li>自動リマインダーの上限回数（5回）と最大送信期間（30日）は、コード上の固定値（<code>MAX_REMINDERS_BEFORE_RESEND</code>, <code>MAX_REMINDER_WINDOW_DAYS</code>）であり、管理画面から変更することはできない。</li>
+      <li>手動再送信によるリマインダー回数リセットは、受信者ごとの reminderCount のみを対象とする。書類の有効期限（expiresAt）は別ロジックで再送信時に延長されるが、これは本PRの変更範囲外の既存挙動。</li>
+      <li>上限に達して自動リマインダーが止まっていることを示すUI表示は現状存在しない（コード上のみで判定される）。</li>
+    </ul>
+  </section>
+
+  <section>
+    <h2>コードからは判断できなかったこと</h2>
+    <div class="unknowns">
+      <p class="lead">Askless は、コードから確定できない事柄を推測で埋めません。以下は「開発チームへの確認が必要」として記録された項目です。</p>
+      <ol>
+        <li><code>MAX_REMINDERS_BEFORE_RESEND</code>（既定5回）は現状コード上の固定値だが、将来的に組織/チーム/書類単位で変更可能にする予定があるか開発に確認が必要。</li>
+        <li>上限到達により自動リマインダーが停止していることを、CSやユーザーが管理画面上で識別する手段（表示・通知）が今後追加される予定か不明。</li>
+        <li>reminderCount が5に達した状態で書類のリマインダー設定（sendAfter/repeatEvery）だけを変更した場合、自動送信は再開されない（reminderCount のリセットは手動再送信でのみ発生）という理解で正しいか、意図した仕様か開発に確認したい。</li>
+      </ol>
+    </div>
+  </section>
+
+  <section>
+    <h2>詳細情報</h2>
+
+    <details>
+      <summary>開発者向け — 画面とエンドポイント<span class="hint">6件</span></summary>
+      <div class="details-body">
+        <div class="card">
+          <div class="card-title">書類の再送信ダイアログ（Resend Document）</div>
+          <span class="card-path">/t/:teamUrl</span>
+          <div class="card-desc">書類詳細画面のアクションメニューから開くダイアログ。未署名の受信者を選んで手動でリマインダーメールを再送信する。送信すると対象受信者の自動リマインダー回数がリセットされる。</div>
+        </div>
+        <div class="card">
+          <div class="card-title">リマインダー設定</div>
+          <span class="card-path">/t/:teamUrl/settings/document, /o/:orgUrl/settings/document など</span>
+          <div class="card-desc">書類/テンプレート編集画面、チーム設定、組織設定。最初のリマインダーを送るまでの日数（sendAfter）と、その後の繰り返し間隔（repeatEvery）を設定するUI。今回の上限回数（5回）はこの画面には表示されず、コード上の固定値。</div>
+        </div>
+        <div class="card">
+          <div class="card-title"><span class="tag">POST</span>envelope.redistribute</div>
+          <span class="card-path">tRPC</span>
+          <div class="card-desc">受信者を指定して書類を手動で再送信するミューテーション。内部で resendDocument を呼び出し、対象受信者の自動リマインダー回数をリセットする。</div>
+        </div>
+        <div class="card">
+          <div class="card-title"><span class="tag">POST</span>document.redistribute</div>
+          <span class="card-path">tRPC</span>
+          <div class="card-desc">書類の手動再送信用ミューテーション（envelope版のラッパー）。resendDocument を呼び出す。</div>
+        </div>
+        <div class="card">
+          <div class="card-title"><span class="tag">POST</span>書類の再送信（公開API v1・非推奨）</div>
+          <span class="card-path">/api/v1/documents/:id/resend</span>
+          <div class="card-desc">同じく resendDocument を呼び出すため、手動再送信によるリマインダー回数リセットが適用される。</div>
+        </div>
+        <div class="card">
+          <div class="card-title"><span class="tag">内部ジョブ</span>process-signing-reminder</div>
+          <span class="card-path">packages/lib/jobs/definitions/internal/</span>
+          <div class="card-desc">自動リマインダーを実際に送信する内部ジョブ。送信対象になった受信者の reminderCount を1つ増やしてから送信する。</div>
+        </div>
+      </div>
+    </details>
+
+    <details>
+      <summary>開発者向け — 権限とロール<span class="hint">2件</span></summary>
+      <div class="details-body">
+        <div class="card">
+          <div class="card-title">書類のオーナー / 所属チームメンバー</div>
+          <div class="card-desc">書類の再送信（手動リマインダー送信、自動リマインダー回数のリセットを含む）ができる。アカウントが無効化されている場合は再送信も自動リマインダーもできない。<sup class="cite" data-refs="1,2"></sup></div>
+        </div>
+        <div class="card">
+          <div class="card-title">CCとして追加された受信者</div>
+          <div class="card-desc">署名アクションが不要なため、自動リマインダーも手動再送信の対象にもならない。<sup class="cite" data-refs="3,4"></sup></div>
+        </div>
+      </div>
+    </details>
+
+    <details>
+      <summary>QA向け — テスト観点<span class="hint">12件</span></summary>
+      <div class="details-body">
+        <div class="test-group">
+          <h3>正常系</h3>
+          <ul>
+            <li>受信者に4回まで自動リマインダーが送られたあと、5回目が送られると reminderCount が5になり、以降は自動リマインダーが送られないことを確認する。</li>
+            <li>自動リマインダー上限に達した受信者に対し、送信者が手動で『再送信』を行うと即座にメールが届き、以降また自動リマインダーの間隔設定に従って送信が再開されることを確認する。</li>
+            <li>手動再送信を行った受信者の reminderCount がDB上で0にリセットされていることを確認する。</li>
+          </ul>
+        </div>
+        <div class="test-group">
+          <h3>異常系</h3>
+          <ul>
+            <li>署名済みの受信者やCC受信者に対しては、手動再送信・自動リマインダーどちらも送られないことを確認する。</li>
+            <li>書類の有効期限が切れている受信者には自動リマインダーが送られないことを確認する（reminderCount の上限とは独立した既存ガード）。</li>
+            <li>組織のメール送信数上限に達している状態で自動リマインダーが送信対象になった場合、reminderCount が増えずにスキップされる（レート制限の判定順序）ことを確認する。</li>
+          </ul>
+        </div>
+        <div class="test-group">
+          <h3>回帰テスト対象</h3>
+          <ul>
+            <li>リマインダー設定（sendAfter / repeatEvery）を変更したときの nextReminderAt 再計算が、既存の reminderCount を壊さず正しく反映されるか。</li>
+            <li>手動再送信時に、これまで通り受信者の有効期限（expiresAt）延長が正しく行われるか。</li>
+            <li>自動リマインダーが一度も送られていない受信者について、sendAfter の初回リマインダー計算が従来通り機能するか。</li>
+            <li>Webhook（DOCUMENT_REMINDER_SENT）が自動送信・手動再送信それぞれで従来通り発火するか。</li>
+            <li>監査ログ（DocumentAuditLog, EMAIL_SENT/isResending）が自動リマインダーと手動再送信で従来通り正しく記録されるか。</li>
+          </ul>
+        </div>
+        <div class="test-group">
+          <h3>E2E シナリオ — 自動リマインダーが上限回数で停止し、手動再送信で再開する</h3>
+          <ul>
+            <li>リマインダー間隔を短く設定した書類を作成し、未署名の受信者に送付する。</li>
+            <li>自動リマインダージョブを5回分実行させる。</li>
+            <li>6回目のリマインダーが自動送信されないことを確認する。</li>
+            <li>書類詳細画面から対象受信者を選んで『再送信』を手動実行する。</li>
+            <li>手動再送信メールが届き、reminderCount が0にリセットされていることを確認する。</li>
+            <li>その後、再び自動リマインダージョブを実行し、送信が再開されることを確認する。</li>
+          </ul>
+        </div>
+      </div>
+    </details>
+
+    <details>
+      <summary>用語<span class="hint">4件</span></summary>
+      <div class="details-body">
+        <div class="card">
+          <div class="card-title">自動リマインダー</div>
+          <div class="card-desc">リマインダーメール / 催促メール / 自動催促 — <span class="mono">process-signing-reminder / resolveNextReminderAt</span></div>
+        </div>
+        <div class="card">
+          <div class="card-title">手動再送信</div>
+          <div class="card-desc">再送信 / リマインダーを送る / Resend — <span class="mono">resendDocument / envelope.redistribute</span></div>
+        </div>
+        <div class="card">
+          <div class="card-title">リマインダー送信回数上限</div>
+          <div class="card-desc">5回制限 / リマインダー上限 — <span class="mono">MAX_REMINDERS_BEFORE_RESEND</span></div>
+        </div>
+        <div class="card">
+          <div class="card-title">リマインダー送信可能期間</div>
+          <div class="card-desc">30日ウィンドウ — <span class="mono">MAX_REMINDER_WINDOW_DAYS</span></div>
+        </div>
+      </div>
+    </details>
+
+    <details id="sources-block">
+      <summary>出典<span class="hint">19件・すべて実在を検証済み</span></summary>
+      <div class="details-body">
+        <ol class="sources" id="sources-list"></ol>
+      </div>
+    </details>
+  </section>
+
+  <section>
+    <div class="chat">
+      <h2>この仕様について質問する</h2>
+      <p class="chat-lead">
+        回答は、このページに表示されている仕様1件だけを根拠にします。書かれていないことは「わかりません」と答えます。
+      </p>
+      <div class="examples">
+        <button class="example" type="button" disabled>リマインダーの間隔設定を変えたら、止まっていた自動送信は再開しますか？</button>
+        <button class="example" type="button" disabled>リマインダーが5回で止まったあと、また送るにはどうすればいいですか？</button>
+        <button class="example" type="button" disabled>CCの人にもリマインダーは届きますか？</button>
+        <button class="example" type="button" disabled>リマインダーが1通も届かないと言われました。何を確認すればいいですか？</button>
+      </div>
+      <form class="chat-form" id="chat-form" onsubmit="return false;">
+        <input type="text" id="chat-input" placeholder="この仕様について質問してみてください" disabled aria-label="質問">
+        <button type="submit" class="btn-primary" disabled>質問する</button>
+      </form>
+      <p class="chat-note">※ チャット機能は準備中です。近日公開します。</p>
+    </div>
+  </section>
+
+  <div class="cta-block">
+    <h2>これを、あなたのリポジトリで。</h2>
+    <p>Askless はマージされたPRから、この仕様を自動で生成・更新します。</p>
+    <a class="btn-primary" href="/#waitlist">先行アクセスに登録する</a>
+  </div>
+
+  <footer>
+    <span>Askless — OSS版（spec-bridge）は <a href="https://github.com/Rtaaaaabo/spec-bridge" target="_blank" rel="noopener">GitHub</a> で公開中</span>
+    <span>この仕様は <a href="https://github.com/documenso/documenso" target="_blank" rel="noopener">documenso</a>（MIT/AGPL）のコードから生成しています</span>
+  </footer>
+
+</div>
+
+<script>
+  // 出典は PR のマージコミットに固定する。main が進んでも行番号がズレない。
+  var COMMIT = '04f6e761781aef9e7ec33f05133c0cdc346882e2';
+  var BLOB = 'https://github.com/documenso/documenso/blob/' + COMMIT + '/';
+
+  // [番号, パス, 行] — null は行指定なし（マイグレーションファイル全体）
+  var SOURCES = [
+    ['packages/lib/server-only/document/resend-document.ts', 61],
+    ['packages/lib/jobs/definitions/internal/process-signing-reminder.handler.ts', 126],
+    ['packages/lib/jobs/definitions/internal/process-signing-reminder.handler.ts', 45],
+    ['packages/lib/server-only/document/resend-document.ts', 128],
+    ['packages/lib/constants/envelope-reminder.ts', 43],
+    ['packages/lib/constants/envelope-reminder.ts', 81],
+    ['packages/lib/jobs/definitions/internal/process-signing-reminder.handler.ts', 55],
+    ['packages/lib/jobs/definitions/internal/process-signing-reminder.handler.ts', 247],
+    ['packages/lib/constants/envelope-reminder.ts', 62],
+    ['packages/lib/server-only/document/resend-document.ts', 145],
+    ['packages/lib/server-only/recipient/update-recipient-next-reminder.ts', 41],
+    ['packages/lib/server-only/document/resend-document.ts', 147],
+    ['packages/prisma/schema.prisma', 645],
+    ['packages/prisma/migrations/20260622120000_add_recipient_reminder_count/migration.sql', null],
+    ['packages/lib/server-only/recipient/update-recipient-next-reminder.ts', 87],
+    ['packages/lib/server-only/recipient/update-recipient-next-reminder.ts', 100],
+    ['packages/lib/jobs/definitions/internal/process-signing-reminder.handler.ts', 95],
+    ['packages/lib/jobs/definitions/internal/process-signing-reminder.handler.ts', 100],
+    ['packages/lib/jobs/definitions/internal/process-signing-reminder.handler.ts', 165]
+  ];
+
+  function sourceUrl(entry) {
+    return BLOB + entry[0] + (entry[1] === null ? '' : '#L' + entry[1]);
+  }
+
+  function sourceLabel(entry) {
+    return entry[0] + (entry[1] === null ? '' : ':' + entry[1]);
+  }
+
+  // 本文中の [n] を GitHub へのリンクに展開する
+  document.querySelectorAll('sup.cite').forEach(function (sup) {
+    sup.getAttribute('data-refs').split(',').forEach(function (raw) {
+      var n = parseInt(raw, 10);
+      var entry = SOURCES[n - 1];
+      if (!entry) return;
+      var a = document.createElement('a');
+      a.href = sourceUrl(entry);
+      a.target = '_blank';
+      a.rel = 'noopener';
+      a.textContent = n;
+      a.title = sourceLabel(entry);
+      sup.appendChild(a);
+    });
+  });
+
+  // 出典一覧
+  var list = document.getElementById('sources-list');
+  SOURCES.forEach(function (entry) {
+    var li = document.createElement('li');
+    var a = document.createElement('a');
+    a.href = sourceUrl(entry);
+    a.target = '_blank';
+    a.rel = 'noopener';
+    a.textContent = sourceLabel(entry);
+    li.appendChild(a);
+    list.appendChild(li);
+  });
+
+  // 本文の出典リンクを踏む前に、出典セクションを開いておく
+  if (location.hash === '#sources-block') {
+    document.getElementById('sources-block').open = true;
+  }
+</script>
+
+</body>
+</html>
