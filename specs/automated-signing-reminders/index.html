@@ -373,6 +373,68 @@
 
   .chat-note { font-size: 12.5px; color: var(--ink-soft); margin-top: 14px; }
 
+  /* ---------- chat log ---------- */
+
+  .turn { margin-bottom: 18px; }
+  .turn:last-child { margin-bottom: 18px; }
+
+  .turn-q {
+    font-size: 14px;
+    font-weight: 500;
+    padding: 10px 14px;
+    background: var(--panel-dark);
+    color: var(--panel-text);
+    margin-bottom: 10px;
+  }
+
+  .turn-a { background: var(--paper); border: 1px solid var(--rule); padding: 14px 16px; }
+
+  .verdict {
+    display: inline-block;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10.5px;
+    padding: 3px 8px;
+    margin-bottom: 10px;
+    border: 1px solid var(--rule);
+  }
+
+  .verdict-spec { border-color: #4a7c59; color: #2f5d3d; background: #e4efe6; }
+  .verdict-bug { border-color: #a9564a; color: #843f35; background: #f3e3e0; }
+  .verdict-unknown { border-color: #7d8894; color: #4f5a66; background: var(--paper-raised); }
+
+  .turn-a h4 {
+    font-family: 'Zen Kaku Gothic New', sans-serif;
+    font-size: 12px;
+    font-weight: 700;
+    color: var(--ink-soft);
+    margin: 14px 0 6px;
+  }
+
+  .turn-a h4:first-of-type { margin-top: 0; }
+  .turn-a .headline { font-size: 15px; font-weight: 500; margin-bottom: 4px; }
+  .turn-a .body { font-size: 14px; white-space: pre-wrap; }
+
+  .turn-a blockquote {
+    margin: 0 0 8px;
+    padding: 8px 12px;
+    border-left: 2px solid var(--blue);
+    background: var(--paper-raised);
+    font-size: 13px;
+  }
+
+  .turn-a blockquote .src {
+    display: block;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10.5px;
+    color: var(--ink-soft);
+    margin-top: 5px;
+    word-break: break-all;
+  }
+
+  .turn-a ul { margin: 0; padding-left: 18px; font-size: 13.5px; }
+  .turn-err { border-color: #a9564a; color: #843f35; }
+  .thinking { font-size: 13.5px; color: var(--ink-soft); }
+
   /* ---------- cta / footer ---------- */
 
   .cta-block { text-align: center; padding: 40px 0; border-top: 1px solid var(--rule); }
@@ -617,17 +679,20 @@
       <p class="chat-lead">
         回答は、このページに表示されている仕様1件だけを根拠にします。書かれていないことは「わかりません」と答えます。
       </p>
-      <div class="examples">
-        <button class="example" type="button" disabled>リマインダーの間隔設定を変えたら、止まっていた自動送信は再開しますか？</button>
-        <button class="example" type="button" disabled>リマインダーが5回で止まったあと、また送るにはどうすればいいですか？</button>
-        <button class="example" type="button" disabled>CCの人にもリマインダーは届きますか？</button>
-        <button class="example" type="button" disabled>リマインダーが1通も届かないと言われました。何を確認すればいいですか？</button>
+      <div class="examples" id="examples">
+        <button class="example" type="button">リマインダーの間隔設定を変えたら、止まっていた自動送信は再開しますか？</button>
+        <button class="example" type="button">リマインダーが5回で止まったあと、また送るにはどうすればいいですか？</button>
+        <button class="example" type="button">CCの人にもリマインダーは届きますか？</button>
+        <button class="example" type="button">リマインダーが1通も届かないと言われました。何を確認すればいいですか？</button>
       </div>
-      <form class="chat-form" id="chat-form" onsubmit="return false;">
-        <input type="text" id="chat-input" placeholder="この仕様について質問してみてください" disabled aria-label="質問">
-        <button type="submit" class="btn-primary" disabled>質問する</button>
+
+      <div id="chat-log" aria-live="polite"></div>
+
+      <form class="chat-form" id="chat-form">
+        <input type="text" id="chat-input" placeholder="この仕様について質問してみてください" maxlength="400" aria-label="質問">
+        <button type="submit" class="btn-primary" id="chat-submit">質問する</button>
       </form>
-      <p class="chat-note">※ チャット機能は準備中です。近日公開します。</p>
+      <p class="chat-note" id="chat-note">1日10問までお試しいただけます。</p>
     </div>
   </section>
 
@@ -713,6 +778,157 @@
   if (location.hash === '#sources-block') {
     document.getElementById('sources-block').open = true;
   }
+
+  /* ---------- チャット ---------- */
+
+  var SPEC_ID = 'automated-signing-reminders';
+
+  var form = document.getElementById('chat-form');
+  var input = document.getElementById('chat-input');
+  var submit = document.getElementById('chat-submit');
+  var log = document.getElementById('chat-log');
+  var note = document.getElementById('chat-note');
+  var busy = false;
+  // 上限に達したあとは入力を閉じたままにする。busy と混ぜると
+  // 回答のたびに解除されてしまうので、別のフラグで持つ。
+  var locked = false;
+
+  var VERDICT = {
+    spec: ['verdict-spec', '仕様どおり'],
+    bug: ['verdict-bug', '不具合の可能性'],
+    unknown: ['verdict-unknown', '判断できない']
+  };
+
+  function el(tag, cls, text) {
+    var node = document.createElement(tag);
+    if (cls) node.className = cls;
+    if (text !== undefined) node.textContent = text;
+    return node;
+  }
+
+  function addSection(parent, heading, build) {
+    parent.appendChild(el('h4', null, heading));
+    build(parent);
+  }
+
+  function renderAnswer(turn, data) {
+    var box = el('div', 'turn-a');
+
+    var meta = VERDICT[data.verdict] || VERDICT.unknown;
+    box.appendChild(el('span', 'verdict ' + meta[0], meta[1]));
+
+    if (data.headline) box.appendChild(el('div', 'headline', data.headline));
+
+    if (data.answerForCustomer) {
+      addSection(box, 'そのまま返せる文面', function (p) {
+        p.appendChild(el('div', 'body', data.answerForCustomer));
+      });
+    }
+
+    if (data.explanation) {
+      addSection(box, '担当者向けの説明', function (p) {
+        p.appendChild(el('div', 'body', data.explanation));
+      });
+    }
+
+    if (data.citations && data.citations.length) {
+      addSection(box, '根拠にした記述', function (p) {
+        data.citations.forEach(function (c) {
+          var quote = el('blockquote', null, c.quote);
+          if (c.file) quote.appendChild(el('span', 'src', c.file));
+          p.appendChild(quote);
+        });
+      });
+    }
+
+    if (data.followUp && data.followUp.length) {
+      addSection(box, '開発に確認したほうがよいこと', function (p) {
+        var list = el('ul');
+        data.followUp.forEach(function (item) { list.appendChild(el('li', null, item)); });
+        p.appendChild(list);
+      });
+    }
+
+    turn.replaceChild(box, turn.lastChild);
+  }
+
+  function renderError(turn, message) {
+    var box = el('div', 'turn-a turn-err');
+    box.appendChild(el('div', 'body', message));
+    turn.replaceChild(box, turn.lastChild);
+  }
+
+  function setBusy(state) {
+    busy = state;
+    input.disabled = state;
+    submit.disabled = state;
+    submit.textContent = state ? '考えています…' : '質問する';
+  }
+
+  function lock(message) {
+    locked = true;
+    note.textContent = message || '';
+    input.disabled = true;
+    submit.disabled = true;
+    submit.textContent = '質問する';
+    document.getElementById('examples').querySelectorAll('button')
+      .forEach(function (b) { b.disabled = true; });
+  }
+
+  async function send(question) {
+    if (busy || locked || !question) return;
+    setBusy(true);
+
+    var turn = el('div', 'turn');
+    turn.appendChild(el('div', 'turn-q', question));
+    var pending = el('div', 'turn-a');
+    pending.appendChild(el('div', 'thinking', '仕様を読んでいます…'));
+    turn.appendChild(pending);
+    log.appendChild(turn);
+    turn.scrollIntoView({ block: 'nearest' });
+
+    try {
+      var res = await fetch('/api/ask', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ question: question, specId: SPEC_ID })
+      });
+      var data = await res.json();
+
+      if (!res.ok) {
+        renderError(turn, data.message || '回答の生成に失敗しました。');
+        // 上限に達したら入力を閉じる。ページの閲覧はそのまま続けられる。
+        if (res.status === 429 || res.status === 503) {
+          lock(data.message);
+        }
+        return;
+      }
+
+      renderAnswer(turn, data);
+      if (typeof data.remainingToday === 'number') {
+        note.textContent = '本日はあと ' + data.remainingToday + ' 問お試しいただけます。';
+      }
+    } catch (err) {
+      renderError(turn, '通信に失敗しました。時間をおいてお試しください。');
+    } finally {
+      busy = false;
+      if (!locked) setBusy(false);
+    }
+  }
+
+  form.addEventListener('submit', function (e) {
+    e.preventDefault();
+    var question = input.value.trim();
+    if (!question) return;
+    input.value = '';
+    send(question);
+  });
+
+  document.getElementById('examples').addEventListener('click', function (e) {
+    var button = e.target.closest('button');
+    if (!button || button.disabled) return;
+    send(button.textContent.trim());
+  });
 </script>
 
 </body>
