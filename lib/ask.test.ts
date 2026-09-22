@@ -6,7 +6,7 @@
  */
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { parseAnswer } from "./ask.ts";
+import { hasCredentials, parseAnswer } from "./ask.ts";
 
 const withCitation = JSON.stringify({
   verdict: "spec",
@@ -96,4 +96,28 @@ test("citations が配列でなくても落ちず、断定は通さない", () =
   );
   assert.equal(answer.verdict, "unknown");
   assert.deepEqual(answer.citations, []);
+});
+
+test("資格情報が無ければ hasCredentials は false", () => {
+  const saved = [process.env.ANTHROPIC_API_KEY, process.env.ANTHROPIC_AUTH_TOKEN];
+  delete process.env.ANTHROPIC_API_KEY;
+  delete process.env.ANTHROPIC_AUTH_TOKEN;
+  try {
+    assert.equal(hasCredentials(), false);
+
+    process.env.ANTHROPIC_API_KEY = "sk-ant-test";
+    assert.equal(hasCredentials(), true, "API キーがあれば true");
+
+    delete process.env.ANTHROPIC_API_KEY;
+    process.env.ANTHROPIC_AUTH_TOKEN = "token";
+    assert.equal(hasCredentials(), true, "AUTH_TOKEN でも true");
+
+    process.env.ANTHROPIC_AUTH_TOKEN = "";
+    assert.equal(hasCredentials(), false, "空文字は未設定として扱う");
+  } finally {
+    if (saved[0] === undefined) delete process.env.ANTHROPIC_API_KEY;
+    else process.env.ANTHROPIC_API_KEY = saved[0];
+    if (saved[1] === undefined) delete process.env.ANTHROPIC_AUTH_TOKEN;
+    else process.env.ANTHROPIC_AUTH_TOKEN = saved[1];
+  }
 });
