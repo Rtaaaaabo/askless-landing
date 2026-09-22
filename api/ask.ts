@@ -10,7 +10,7 @@
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import Anthropic from "@anthropic-ai/sdk";
-import { ask, MAX_QUESTION_CHARS } from "../lib/ask.js";
+import { ask, hasCredentials, MAX_QUESTION_CHARS } from "../lib/ask.js";
 import { clientIp, consume, isConfigured, PER_IP_PER_DAY } from "../lib/limits.js";
 
 export const config = { runtime: "nodejs" };
@@ -48,9 +48,16 @@ export default async function handler(request: Request): Promise<Response> {
     return json({ error: "method_not_allowed" }, 405);
   }
 
+  // 動かせない設定なら、カウンタを消費する前にここで止める。
+  // カウンタは環境をまたいで共有なので、キーの無い環境（Preview など）で
+  // 消費してしまうと本番の枠が減る。
+  const missing: string[] = [];
   // 制限をかけられない状態で動かすと、青天井で課金され得る。
-  if (!isConfigured()) {
-    console.error("Upstash が未設定のためチャットを停止しています");
+  if (!isConfigured()) missing.push("Upstash");
+  if (!hasCredentials()) missing.push("Anthropic の資格情報");
+
+  if (missing.length > 0) {
+    console.error(`${missing.join(" と ")} が未設定のためチャットを停止しています`);
     return json({ error: "unavailable", message: "チャットは現在ご利用いただけません。" }, 503);
   }
 

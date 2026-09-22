@@ -35,6 +35,21 @@ const MAX_TOKENS = Number(process.env.DEMO_MAX_TOKENS ?? 2000);
 /** 質問文の長さ上限。長文を投げ込まれて入力側の課金が伸びるのを防ぐ。 */
 export const MAX_QUESTION_CHARS = 400;
 
+/**
+ * Anthropic の資格情報が環境にあるか。
+ *
+ * キーを入れていない環境（例: 本番にだけキーを置いた場合の Preview）で
+ * モデルを呼びに行くと、レート制限のカウンタだけ消費してから失敗する。
+ * カウンタは環境をまたいで共有なので、プレビューを触っただけで本番の
+ * 1日ぶんの枠が減ってしまう。呼ぶ前にここで弾く。
+ *
+ * SDK は ANTHROPIC_API_KEY と ANTHROPIC_AUTH_TOKEN のどちらでも動くため、
+ * 両方を見る。
+ */
+export function hasCredentials(): boolean {
+  return Boolean(process.env.ANTHROPIC_API_KEY || process.env.ANTHROPIC_AUTH_TOKEN);
+}
+
 const SYSTEM = `あなたはカスタマーサポート（CX）チームの一次請け担当です。
 渡された機能仕様ドキュメントだけを根拠に、問い合わせに答えます。
 
