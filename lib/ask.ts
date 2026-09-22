@@ -179,11 +179,25 @@ export function parseAnswer(text: string): AskAnswer {
   return answer;
 }
 
+/**
+ * モデル呼び出しの打ち切り時間（ミリ秒）。
+ *
+ * Vercel の maxDuration より短くしておく。長いほうで先に切られると
+ * 関数ごと殺されて 504 の生レスポンスになり、こちらが用意した
+ * JSON のエラーメッセージを返せない。
+ *
+ * SDK はタイムアウトも再試行の対象にするため、maxRetries は 0 にする。
+ * 既定の 2 のままだと最悪 timeout × 3 まで伸びて maxDuration を超える。
+ */
+const CALL_TIMEOUT_MS = Number(process.env.DEMO_CALL_TIMEOUT_MS ?? 90_000);
+
 export async function ask(question: string, specMarkdown: string): Promise<AskAnswer> {
-  const client = new Anthropic();
+  const client = new Anthropic({ timeout: CALL_TIMEOUT_MS, maxRetries: 0 });
   const startedAt = Date.now();
 
-  const response = await client.messages.create({
+  let response;
+  try {
+    response = await client.messages.create({
     model: MODEL,
     max_tokens: MAX_TOKENS,
     // 単一ドキュメントへの根拠付き Q&A なので、深く考えさせる必要はない。
@@ -205,7 +219,12 @@ export async function ask(question: string, specMarkdown: string): Promise<AskAn
       },
     ],
     messages: [{ role: "user", content: `# 問い合わせ内容\n${question}` }],
-  });
+    });
+  } catch (error) {
+    // 失敗したときこそ所要時間を残す。遅いのか即死なのかで原因が変わる。
+    console.error(`ask: ${Date.now() - startedAt}ms で失敗 (model=${MODEL})`, error);
+    throw error;
+  }
 
   if (response.stop_reason === "refusal") {
     throw new Error("refusal");

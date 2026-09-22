@@ -84,6 +84,11 @@ Preview ではチャットが 503 を返すだけで、仕様ページの閲覧�
 | `DEMO_PER_MONTH` | `2000` | サイト全体の月間質問数 |
 | `DEMO_MAX_TOKENS` | `4000` | 1回の回答の出力トークン上限（思考トークンと共有） |
 | `DEMO_ASK_MODEL` | `claude-opus-5` | 使用モデル |
+| `DEMO_CALL_TIMEOUT_MS` | `90000` | モデル呼び出しの打ち切り時間 |
+
+`DEMO_CALL_TIMEOUT_MS` は `vercel.json` の `maxDuration` より短くしておくこと。
+長いほうで先に切られると関数ごと殺され、504 の生レスポンスになって
+こちらが用意した文面を返せない。
 
 ## 仕様を追加・差し替えるとき
 

@@ -2,7 +2,7 @@
   "functions": {
     "api/ask.ts": {
       "includeFiles": "specs/**/spec.md",
-      "maxDuration": 60
+      "maxDuration": 300
     }
   }
 }
