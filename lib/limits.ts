@@ -9,8 +9,25 @@
  * ここにバグがあっても課金が伸び続けないようにするのが二重化の狙い。
  */
 
-const URL = process.env.UPSTASH_REDIS_REST_URL;
-const TOKEN = process.env.UPSTASH_REDIS_REST_TOKEN;
+/**
+ * 接続情報を環境から取る。
+ *
+ * Vercel の Upstash 連携が作る変数名は `KV_REST_API_*`。Upstash 自身の
+ * ドキュメントや手で設定する場合は `UPSTASH_REDIS_REST_*` なので両方を見る。
+ * 連携で入る名前を優先。
+ *
+ * `KV_REST_API_READ_ONLY_TOKEN` は使わないこと。カウンタの INCR には
+ * 書き込み権限が要る。
+ *
+ * 読み込み時ではなく呼び出し時に取るのは、モジュールの評価順に依存させない
+ * ため（テストで環境変数を差し替えられるようにする意味もある）。
+ */
+function connection(): { url?: string; token?: string } {
+  return {
+    url: process.env.KV_REST_API_URL || process.env.UPSTASH_REDIS_REST_URL,
+    token: process.env.KV_REST_API_TOKEN || process.env.UPSTASH_REDIS_REST_TOKEN,
+  };
+}
 
 /** 同一 IP が1日に投げられる質問数 */
 export const PER_IP_PER_DAY = Number(process.env.DEMO_PER_IP_PER_DAY ?? 10);
@@ -28,7 +45,8 @@ export interface LimitState {
 
 /** Upstash が未設定なら制限をかけられない。事故防止のため、その場合は止める。 */
 export function isConfigured(): boolean {
-  return Boolean(URL && TOKEN);
+  const { url, token } = connection();
+  return Boolean(url && token);
 }
 
 /**
@@ -36,10 +54,11 @@ export function isConfigured(): boolean {
  * コマンドは [["INCR","k"],["EXPIRE","k","60"]] の形。
  */
 async function pipeline(commands: string[][]): Promise<unknown[]> {
-  const res = await fetch(`${URL}/pipeline`, {
+  const { url, token } = connection();
+  const res = await fetch(`${url}/pipeline`, {
     method: "POST",
     headers: {
-      Authorization: `Bearer ${TOKEN}`,
+      Authorization: `Bearer ${token}`,
       "Content-Type": "application/json",
     },
     body: JSON.stringify(commands),

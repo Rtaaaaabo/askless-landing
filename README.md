@@ -45,8 +45,18 @@ Vercel の Marketplace から Upstash for Redis を追加すると、次の2つ�
 
 | 変数 | 用途 |
 | --- | --- |
-| `UPSTASH_REDIS_REST_URL` | レート制限のカウンタ |
-| `UPSTASH_REDIS_REST_TOKEN` | 同上 |
+| `KV_REST_API_URL` | レート制限のカウンタ |
+| `KV_REST_API_TOKEN` | 同上 |
+
+**連携が作る名前は `KV_REST_API_*` で、Upstash 自身のドキュメントに出てくる
+`UPSTASH_REDIS_REST_*` ではない。** コードは両方を見るので、連携で入れても
+手で設定してもよい。
+
+`KV_REST_API_READ_ONLY_TOKEN` も一緒に作られるが、こちらは使わない。
+カウンタの `INCR` に書き込み権限が要るため。
+
+連携時の Custom Prefix は空のままにすること。プレフィックスを付けると
+変数名が変わり、存在するのに読めない状態になる。
 
 **この2つが未設定だとチャットは 503 を返して動かない。** 制限をかけられない
 状態で LLM を呼ぶと青天井に課金され得るため、意図的にそうしている。
