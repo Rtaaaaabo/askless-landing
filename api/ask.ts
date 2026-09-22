@@ -118,6 +118,13 @@ export default async function handler(request: Request): Promise<Response> {
     // 詳細はログに残し、クライアントには返さない（内部情報とキーの保護）。
     console.error("回答の生成に失敗しました", error);
 
+    // SDK の打ち切り。504 の生レスポンスではなくこちらの文面で返す。
+    if (error instanceof Anthropic.APIConnectionTimeoutError) {
+      return json(
+        { error: "timeout", message: "回答に時間がかかりすぎました。もう一度お試しください。" },
+        504,
+      );
+    }
     if (error instanceof Anthropic.RateLimitError) {
       return json({ error: "busy", message: "混み合っています。少し時間をおいてお試しください。" }, 503);
     }
