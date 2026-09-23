@@ -240,10 +240,17 @@ export async function ask(question: string, specMarkdown: string): Promise<AskAn
   }
 
   // 遅さと枠の消費を後から追えるようにする。質問文と回答は出さない。
+  //
+  // input_tokens は「キャッシュを使わなかったぶん」だけなので、これだけ見ると
+  // 仕様書の数千トークンが消えたように見える。書き込みと読み取りを併記する。
+  // 2回目以降に read が伸びていればキャッシュが効いている。
   const usage = response.usage;
+  const cacheWrite = usage.cache_creation_input_tokens ?? 0;
+  const cacheRead = usage.cache_read_input_tokens ?? 0;
   console.log(
-    `ask: ${Date.now() - startedAt}ms / 入力 ${usage.input_tokens} ` +
-      `(キャッシュ読み ${usage.cache_read_input_tokens ?? 0}) / 出力 ${usage.output_tokens}`,
+    `ask: ${Date.now() - startedAt}ms / model=${MODEL} / ` +
+      `入力 ${usage.input_tokens} (キャッシュ write ${cacheWrite} / read ${cacheRead}) / ` +
+      `出力 ${usage.output_tokens}`,
   );
 
   const text = response.content
