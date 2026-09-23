@@ -13,8 +13,6 @@ import Anthropic from "@anthropic-ai/sdk";
 import { ask, hasCredentials, MAX_QUESTION_CHARS } from "../lib/ask.js";
 import { clientIp, consume, isConfigured, PER_IP_PER_DAY } from "../lib/limits.js";
 
-export const config = { runtime: "nodejs" };
-
 /** 公開するのは1件だけ。ここに無い id は受け付けない。 */
 const SPECS: Record<string, string> = {
   "automated-signing-reminders": "specs/automated-signing-reminders/spec.md",
@@ -43,11 +41,17 @@ function json(body: unknown, status: number): Response {
   });
 }
 
-export default async function handler(request: Request): Promise<Response> {
-  if (request.method !== "POST") {
-    return json({ error: "method_not_allowed" }, 405);
-  }
-
+/**
+ * fetch スタイルの名前付きメソッドとして公開する。
+ *
+ * `export default function handler(request)` にすると Vercel は旧来の
+ * Node シグネチャ `(req, res) => void` として扱い、**返した Response を捨てる**。
+ * レスポンスが書かれないまま関数が終わり、maxDuration まで待たされて
+ * 504 になる。名前付きの POST なら Request を受けて Response を返せる。
+ *
+ * POST 以外は Vercel が 405 を返すので、こちらでの判定は不要。
+ */
+export async function POST(request: Request): Promise<Response> {
   // 動かせない設定なら、カウンタを消費する前にここで止める。
   // カウンタは環境をまたいで共有なので、キーの無い環境（Preview など）で
   // 消費してしまうと本番の枠が減る。
