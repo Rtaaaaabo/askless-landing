@@ -3,8 +3,8 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Askless — 「バグですか？仕様ですか？」を、聞かれる前に。</title>
-<meta name="description" content="マージされたPRから機能仕様ドキュメントを自動生成し、CS・QAが読める形で保守するツール、Askless。SaaS版の先行アクセスを受付中。">
+<title>Askless — 何を聞くべきか、コードが先に教えてくれる。</title>
+<meta name="description" content="あなたが書いていないコードから、出典付きの機能仕様を起こすツール、Askless。確定できないことは推測で埋めず、確認事項として返します。SaaS版の先行アクセスを受付中。">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Shippori+Mincho:wght@400;500;600;800&family=Zen+Kaku+Gothic+New:wght@400;500;700;900&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
@@ -98,7 +98,6 @@
   .hero h1 {
     font-size: clamp(28px, 4.6vw, 44px);
     font-weight: 600;
-    max-width: 15ch;
   }
 
   .hero .kicker-line {
@@ -389,7 +388,18 @@
 
   #waitlist input[type="email"]::placeholder { color: #7c8a97; }
 
+  #waitlist select {
+    flex: 1 1 100%;
+    padding: 14px 16px;
+    font-size: 15px;
+    border: 1px solid #3a4552;
+    background: #202b38;
+    color: var(--paper);
+    font-family: 'Zen Kaku Gothic New', sans-serif;
+  }
+
   #waitlist input[type="email"]:focus,
+  #waitlist select:focus,
   #waitlist button:focus-visible,
   header nav a:focus-visible,
   .btn-primary:focus-visible {
@@ -445,11 +455,11 @@
 
 <div class="hero wrap">
   <h1>
-    <span class="kicker-line">「これ、バグですか？</span>
-    <span class="kicker-line">仕様ですか？」</span>
+    <span class="kicker-line">何を聞くべきか、</span>
+    <span class="kicker-line">コードが先に教えてくれる。</span>
   </h1>
   <p class="lede">
-    その質問、もう何回目ですか。生成AIで実装スピードが上がった分、CSやQAが仕様を追いきれず、開発への問い合わせが集中していませんか。Asklessは、マージされたPRから機能仕様ドキュメントを自動生成し、誰でも読める形で保守します。
+    初めて開くコードベースでも、コードから確定できることと、できないことは分けられます。Asklessは、あなたが書いていないコードから機能仕様を起こし、すべての記述にソースの該当行を添えます。確定できないことは推測で埋めず、「開発者への確認事項」として一覧にします。顧客や前任者に会う前に、聞くべきことが揃います。
   </p>
   <div class="cta-row">
     <a class="btn-primary" href="#waitlist">先行アクセスに登録する</a>
@@ -477,6 +487,7 @@
         <li>対象: <code>cart.isGift = true</code> の注文</li>
         <li>根拠PR: #482</li>
         <li>最終更新: マージ日時に自動追従</li>
+        <li>確認事項: ギフト指定の注文で、送料にも課税しないか</li>
       </ul>
     </div>
   </div>
@@ -485,14 +496,14 @@
 <section id="pain">
   <div class="wrap">
     <div class="section-head">
-      <h2>心当たり、ありませんか</h2>
-      <p>実装が速くなるほど、置いていかれるのはいつもドキュメントです。</p>
+      <h2>最初の打ち合わせ、何を聞くか決まっていますか</h2>
+      <p>読めば分かることを聞くたびに、信頼は少しずつ削れていきます。</p>
     </div>
     <div class="pain-list">
-      <div class="pain-item"><strong>仕様書を書く時間が、実装の速度に追いつかない。</strong></div>
-      <div class="pain-item"><strong>気づけば自分が、CSとQAの問い合わせ窓口になっている。</strong></div>
-      <div class="pain-item"><strong>同じ質問にSlackで何度も同じ説明をしている。</strong></div>
-      <div class="pain-item"><strong>半年前の仕様書を開いたら、もう実装と合っていなかった。</strong></div>
+      <div class="pain-item"><strong>コードを読めば分かることを、相手に聞いてしまう。</strong></div>
+      <div class="pain-item"><strong>逆に、コードからは分からない意図を、推測で埋めてしまう。</strong></div>
+      <div class="pain-item"><strong>打ち合わせの前に、全部を読む時間はない。</strong></div>
+      <div class="pain-item"><strong>AIに要約させたら、存在しない設定項目が書いてあった。</strong></div>
     </div>
   </div>
 </section>
@@ -500,24 +511,24 @@
 <section id="how">
   <div class="wrap">
     <div class="section-head">
-      <h2>仕組みはシンプルです</h2>
-      <p>PRをマージするだけで、ドキュメントは後からついてきます。</p>
+      <h2>根拠がなければ、書きません</h2>
+      <p>出典のない記述を「書かないようお願い」しているのではありません。書けない構造になっています。</p>
     </div>
     <div class="process">
       <div class="process-step">
         <span class="num">01</span>
-        <h3>PRがマージされる</h3>
-        <p>普段通り開発を進めるだけで構いません。特別な作業は増えません。</p>
+        <h3>リポジトリを渡す</h3>
+        <p>既存のコードベースから、ユーザーに見える機能を洗い出します。解析対象のコードは書き換えません。</p>
       </div>
       <div class="process-step">
         <span class="num">02</span>
-        <h3>機能仕様を自動生成</h3>
-        <p>差分の内容から、根拠のある記述だけをドキュメント化します。推測では書きません。</p>
+        <h3>出典付きで仕様を起こす</h3>
+        <p>すべての記述に、ソースの該当行が付きます。出典のない項目は、スキーマの段階で存在できません。</p>
       </div>
       <div class="process-step">
         <span class="num">03</span>
-        <h3>CS・QAが直接参照</h3>
-        <p>開発に聞かなくても、いま何がどう動くのかをドキュメントで確認できます。</p>
+        <h3>分からないことは、分けて返す</h3>
+        <p>コードから確定できないことは推測せず、「開発者への確認事項」に回します。そのあとはPRのマージに合わせて更新されます。</p>
       </div>
     </div>
   </div>
@@ -526,13 +537,13 @@
 <section id="compare">
   <div class="wrap">
     <div class="section-head">
-      <h2>導入前後で何が変わるか</h2>
+      <h2>読み始めてから、話せるようになるまで</h2>
     </div>
     <table class="compare">
-      <tr><th>導入前</th><th>導入後</th></tr>
-      <tr><td>質問が来るたびに、コードを読み直して答える</td><td>ドキュメントを見てもらえば済む</td></tr>
-      <tr><td>仕様書は書いた瞬間から古くなっていく</td><td>PRのマージに合わせて自動更新される</td></tr>
-      <tr><td>仕様の知識が特定の人に偏っている</td><td>チーム全員が同じ場所を参照できる</td></tr>
+      <tr><th>これまで</th><th>Asklessを使うと</th></tr>
+      <tr><td>全部読んでから、質問を考える</td><td>確認事項の一覧から始める</td></tr>
+      <tr><td>もっともらしい要約を、自分で裏取りする</td><td>裏は最初から、該当行へのリンクで付いている</td></tr>
+      <tr><td>聞いた答えが、議事録に埋もれる</td><td>答えを仕様に書き戻し、確認済みにできる</td></tr>
     </table>
   </div>
 </section>
@@ -540,17 +551,17 @@
 <section id="proof">
   <div class="wrap">
     <div class="section-head">
-      <h2>実プロジェクトで検証済み</h2>
+      <h2>書いていないコードで、検証しています</h2>
     </div>
     <div class="proof-list">
       <a href="https://github.com/formbricks/formbricks" target="_blank" rel="noopener">formbricks</a>
       <a href="https://github.com/documenso/documenso" target="_blank" rel="noopener">documenso</a>
       <a href="https://github.com/go-gitea/gitea" target="_blank" rel="noopener">gitea</a>
     </div>
-    <p class="proof-note">Asklessの基盤となっているOSS版spec-bridgeは、これらの実在するプロジェクトのPR履歴に対して動作検証を行っています。詳細はGitHubのREADMEをご覧ください。</p>
+    <p class="proof-note">Asklessの基盤であるOSS版spec-bridgeは、作者が開発に関わっていない3つのOSSのPR履歴に対して動作検証を行っています。初めて読むコードベースで、出典付きの仕様が書けるかどうか。それをそのまま確かめた検証です。詳細はGitHubのREADMEをご覧ください。</p>
     <p class="proof-note" style="margin-top:18px">
-      <a href="/specs/automated-signing-reminders" style="color:var(--blue-deep)">documensoのPRから生成された仕様を、実物のまま読んでみる →</a><br>
-      <span style="font-size:13px">登録は不要です。電子署名サービスの「署名依頼の自動リマインダー」機能について、全19件の記述にソースコードへの出典が付いています。</span>
+      <a href="/specs/automated-signing-reminders" style="color:var(--blue-deep)">作者が書いていないdocumensoのコードから起こした仕様を、実物のまま読む →</a><br>
+      <span style="font-size:13px">登録は不要です。電子署名サービスの「署名依頼の自動リマインダー」機能について、全19件の記述すべてにGitHubの該当行へのリンクが付いています。生成したものに手を加えずに掲載しています。</span>
     </p>
   </div>
 </section>
@@ -563,6 +574,15 @@
     </div>
     <form class="form-row" id="waitlist-form" action="https://formspree.io/f/mvkoqrdq" method="POST">
       <input type="hidden" name="subject" value="【Askless】ウェイトリストに新規登録がありました">
+      <input type="hidden" name="ref" id="waitlist-ref" value="">
+      <select name="use_case" id="waitlist-use-case" aria-label="主にどんな場面で使いたいですか（任意）">
+        <option value="">主にどんな場面で使いたいですか（任意）</option>
+        <option value="fde">顧客先のコードに入る（FDE・受託）</option>
+        <option value="handover">前任者からの引き継ぎ</option>
+        <option value="dd">技術DD・監査</option>
+        <option value="in-house">自社プロダクトのドキュメント</option>
+        <option value="other">その他</option>
+      </select>
       <input type="email" name="email" id="waitlist-email" placeholder="you@example.com" required aria-label="メールアドレス">
       <button type="submit" class="btn-primary">先行アクセスに登録する</button>
     </form>
@@ -579,6 +599,10 @@
   const form = document.getElementById('waitlist-form');
   const status = document.getElementById('form-status');
   const submitBtn = form.querySelector('button[type="submit"]');
+
+  // 流入元（?ref=zenn など）をフォームと一緒に送る
+  const ref = new URLSearchParams(location.search).get('ref');
+  if (ref) document.getElementById('waitlist-ref').setAttribute('value', ref.slice(0, 64));
 
   form.addEventListener('submit', function (e) {
     e.preventDefault();
