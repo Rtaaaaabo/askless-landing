@@ -1,0 +1,249 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>gitea の開発者に、何を聞くべきか | Askless</title>
+<meta name="description" content="Askless が gitea のコードを読み、7つの機能について、コードで確定できなかった点を種類ごとに分けた実物の出力。人に確かめるしかない「聞くべきこと」12件に、答えを探して開いたファイルへのリンク付き。">
+<meta property="og:title" content="gitea の開発者に、何を聞くべきか">
+<meta property="og:description" content="作者が一行も書いていないコードから、Askless が「聞くべきこと」を先に洗い出した実物の出力。">
+<meta property="og:type" content="article">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Shippori+Mincho:wght@400;500;600;800&family=Zen+Kaku+Gothic+New:wght@400;500;700;900&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --paper: #eef1f4;
+    --paper-raised: #e2e7ec;
+    --ink: #16202c;
+    --ink-soft: #50606f;
+    --blue: #3d6ea5;
+    --blue-deep: #294b73;
+    --rule: #cfd8e0;
+    --max: 760px;
+  }
+
+  * { box-sizing: border-box; }
+
+  body {
+    margin: 0;
+    background: var(--paper);
+    color: var(--ink);
+    font-family: 'Zen Kaku Gothic New', sans-serif;
+    line-height: 1.85;
+    font-size: 16px;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  h1, h2, h3 { font-family: 'Shippori Mincho', serif; color: var(--ink); margin: 0; line-height: 1.5; }
+  a { color: inherit; }
+  .wrap { max-width: var(--max); margin: 0 auto; padding: 0 20px; }
+  code, .mono { font-family: 'JetBrains Mono', monospace; }
+  code { font-size: 0.88em; background: var(--paper-raised); padding: 1px 5px; word-break: break-word; }
+
+  header { padding: 22px 0; border-bottom: 1px solid var(--rule); }
+  header .wrap { display: flex; align-items: center; justify-content: space-between; gap: 16px; }
+  .logo { font-family: 'JetBrains Mono', monospace; font-size: 15px; font-weight: 600; letter-spacing: 0.02em; text-decoration: none; }
+  header nav a { font-size: 13px; text-decoration: none; color: var(--ink-soft); border-bottom: 1px solid var(--rule); padding-bottom: 2px; }
+  header nav a:hover { color: var(--ink); border-color: var(--ink); }
+
+  .doc-head { padding: 36px 0 28px; }
+  .meta-row { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin-bottom: 18px; }
+  .badge {
+    font-family: 'JetBrains Mono', monospace; font-size: 11px; letter-spacing: 0.02em;
+    padding: 4px 9px; border: 1px solid var(--rule); background: var(--paper-raised);
+    color: var(--ink-soft); text-decoration: none; white-space: nowrap;
+  }
+  .badge-repo { border-color: var(--blue-deep); color: var(--blue-deep); }
+  .badge-repo:hover { background: var(--blue-deep); color: var(--paper); }
+  .badge-status { border-color: #a98b4a; color: #7d6431; background: #f3ecdc; }
+  .doc-head h1 { font-size: clamp(25px, 5.2vw, 34px); font-weight: 600; }
+  .doc-head .summary { margin-top: 18px; font-size: 16.5px; color: var(--ink-soft); }
+
+  .stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-top: 24px; }
+  .stat { border: 1px solid var(--rule); background: var(--paper-raised); padding: 12px 14px; }
+  .stat .num { font-family: 'JetBrains Mono', monospace; font-size: 20px; font-weight: 600; display: block; line-height: 1.3; }
+  .stat .label { font-size: 12px; color: var(--ink-soft); }
+
+  .provenance { margin-top: 20px; border: 1px solid var(--rule); background: var(--paper-raised); padding: 16px 18px; font-size: 13px; color: var(--ink-soft); }
+  .provenance strong { color: var(--ink); font-weight: 500; }
+  .provenance a { color: var(--blue-deep); }
+  .provenance p { margin: 0 0 8px; }
+  .provenance p:last-child { margin-bottom: 0; }
+
+  section { padding: 30px 0; border-top: 1px solid var(--rule); }
+  section h2 { font-size: 20px; font-weight: 600; margin-bottom: 12px; }
+  section .lead { font-size: 14px; color: var(--ink-soft); margin: 0 0 20px; }
+
+  ol.toc { margin: 0; padding: 0; list-style: none; counter-reset: toc; }
+  ol.toc li {
+    counter-increment: toc; display: flex; justify-content: space-between; gap: 12px;
+    padding: 10px 0; border-bottom: 1px solid var(--rule); font-size: 15px;
+  }
+  ol.toc li:last-child { border-bottom: none; }
+  ol.toc li::before { content: counter(toc, decimal-leading-zero); font-family: 'JetBrains Mono', monospace; font-size: 12px; color: var(--ink-soft); padding-top: 3px; min-width: 22px; }
+  .toc-title { flex: 1; }
+  .toc-count { font-family: 'JetBrains Mono', monospace; font-size: 12.5px; color: var(--blue-deep); white-space: nowrap; padding-top: 2px; }
+  .toc-note { font-size: 12.5px; color: var(--ink-soft); margin: 14px 0 0; }
+
+  .feature-group { margin-bottom: 26px; }
+  .feature-group:last-child { margin-bottom: 0; }
+  .feature-group h3 { font-size: 16px; font-weight: 600; margin-bottom: 10px; }
+  ul.q-list { margin: 0; padding: 0; list-style: none; }
+  ul.q-list li { border-left: 2px solid var(--blue); padding: 0 0 0 16px; margin-bottom: 18px; }
+  ul.q-list li:last-child { margin-bottom: 0; }
+  .q { margin: 0; font-size: 15px; }
+  .searched { margin-top: 8px; display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
+  .searched-label { font-size: 11.5px; color: var(--ink-soft); margin-right: 2px; }
+  a.file {
+    font-family: 'JetBrains Mono', monospace; font-size: 11px; color: var(--blue-deep);
+    text-decoration: none; border: 1px solid var(--rule); background: var(--paper);
+    padding: 2px 6px; word-break: break-all;
+  }
+  a.file:hover { background: var(--blue-deep); color: var(--paper); border-color: var(--blue-deep); }
+
+  details { border: 1px solid var(--rule); margin-bottom: 12px; background: var(--paper-raised); }
+  details summary {
+    cursor: pointer; padding: 14px 18px; font-size: 14.5px; font-weight: 500; list-style: none;
+    display: flex; justify-content: space-between; gap: 12px; align-items: center;
+  }
+  details summary::-webkit-details-marker { display: none; }
+  details summary::after { content: '+'; font-family: 'JetBrains Mono', monospace; color: var(--ink-soft); font-size: 16px; }
+  details[open] summary::after { content: '−'; }
+  details summary span.hint { font-size: 12px; color: var(--ink-soft); font-weight: 400; margin-left: auto; margin-right: 6px; }
+  .details-body { padding: 16px 18px 18px; border-top: 1px solid var(--rule); }
+  .details-body .lead { margin-bottom: 16px; }
+  .details-body ul.q-list li { border-left-color: var(--rule); }
+  .details-body .q { font-size: 14px; }
+  .details-body .feature-group h3 { font-size: 14.5px; }
+
+  .btn-primary {
+    display: inline-block; background: var(--ink); color: var(--paper); padding: 12px 22px;
+    text-decoration: none; font-size: 14px; font-weight: 500; border: 1px solid var(--ink);
+    font-family: 'Zen Kaku Gothic New', sans-serif;
+  }
+  .btn-primary:hover { background: var(--blue-deep); border-color: var(--blue-deep); }
+
+  .cta-block { text-align: center; padding: 40px 0; border-top: 1px solid var(--rule); }
+  .cta-block h2 { font-size: 19px; margin-bottom: 10px; }
+  .cta-block p { font-size: 14px; color: var(--ink-soft); margin: 0 0 20px; }
+
+  footer {
+    padding: 26px 0 50px; border-top: 1px solid var(--rule); font-size: 12.5px; color: var(--ink-soft);
+    display: flex; flex-wrap: wrap; gap: 10px; justify-content: space-between;
+  }
+  footer a { color: var(--ink-soft); }
+
+  a:focus-visible, summary:focus-visible { outline: 2px solid var(--blue); outline-offset: 2px; }
+
+  @media (max-width: 600px) {
+    .wrap { padding: 0 16px; }
+    body { font-size: 15.5px; }
+    section { padding: 26px 0; }
+    .stat .num { font-size: 17px; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="wrap">
+    <a class="logo" href="/">Askless</a>
+    <nav><a href="/#waitlist">先行アクセス登録</a></nav>
+  </div>
+</header>
+
+<div class="wrap">
+
+  <div class="doc-head">
+    <div class="meta-row">
+      <a class="badge badge-repo" href="https://github.com/go-gitea/gitea/tree/d5ed7375ce67da861e7d80fb817bdc5418193d17" target="_blank" rel="noopener">go-gitea/gitea</a>
+      <span class="badge">Git ホスティング</span>
+      <span class="badge badge-status">draft — 未レビュー</span>
+    </div>
+
+    <h1>gitea の開発者に、何を聞くべきか</h1>
+
+    <p class="summary">
+      作者が一行も書いていない gitea のコードを Askless が読み、7つの機能について、コードから確定できることとできないことを分けました。確定できなかったことのうち、意図や運用のように人に確かめるしかないものが 12 件ありました。
+    </p>
+
+    <div class="stats">
+      <div class="stat"><span class="num">12</span><span class="label">聞くべきこと</span></div>
+      <div class="stat"><span class="num">30分31秒</span><span class="label">7機能の書き起こし</span></div>
+      <div class="stat"><span class="num">$12.80</span><span class="label">API 料金換算</span></div>
+    </div>
+
+    <div class="provenance">
+      <p><strong>このページは、Askless の OSS 版 spec-bridge が gitea の既存コードから生成した出力を、手を加えずに掲載したものです。</strong></p>
+      <p>対象: <a href="https://github.com/go-gitea/gitea/tree/d5ed7375ce67da861e7d80fb817bdc5418193d17" target="_blank" rel="noopener">go-gitea/gitea @ d5ed737</a>。「確認した箇所」は、エージェントが答えを探して実際に開いたファイルで、このコミットに固定したリンクです。</p>
+      <p>開いていないファイルを挙げた項目は、機械的に「追加で調べれば埋まる可能性があるもの」へ格下げされます。ただし、確かめているのはファイルを開いたかどうかまでで、十分に探したかどうかまでは保証しません。</p>
+      <p>生成物の原文: <a href="source/open-questions.md">open-questions.md</a> / <a href="source/README.md">README.md</a></p>
+    </div>
+  </div>
+
+  <section>
+    <h2>機能の目次</h2>
+    <p class="lead">Askless がコードを探索して、ドキュメント化すべきと判断した7つの機能です。右は、その機能の「聞くべきこと」の件数です。</p>
+    <ol class="toc">
+<li><span class="toc-title">Actions（CI/CDワークフロー）</span><span class="toc-count">2 件</span></li>
+<li><span class="toc-title">認証(ログイン・2要素認証・OAuth/WebAuthn)</span><span class="toc-count">1 件</span></li>
+<li><span class="toc-title">Issue管理</span><span class="toc-count">3 件</span></li>
+<li><span class="toc-title">通知（Notifications）</span><span class="toc-count">2 件</span></li>
+<li><span class="toc-title">組織・チームと権限管理</span><span class="toc-count">1 件</span></li>
+<li><span class="toc-title">プルリクエスト・コードレビュー</span><span class="toc-count">2 件</span></li>
+<li><span class="toc-title">リポジトリ作成・コード閲覧編集</span><span class="toc-count">1 件</span></li>
+    </ol>
+    <p class="toc-note">各機能の仕様本文は、このページでは公開していません。出典付きの仕様本文の例は <a href="/specs/automated-signing-reminders">documenso のデモ</a>をご覧ください。</p>
+  </section>
+
+  <section>
+    <h2>聞くべきこと（12 件）</h2>
+    <p class="lead">コードを探したうえで、意図・運用・外部システムの挙動など、人に確かめるしかない点です。各項目に、答えを探して開いたファイルを添えています。</p>
+<div class="feature-group"><h3>Actions（CI/CDワークフロー）</h3><ul class="q-list"><li><p class="q">リポジトリ単位の設定にスコープドワークフロー登録画面が無いのは意図的な仕様（組織/ユーザー/インスタンス単位でのみ運用する設計）か、それとも未実装か？</p><div class="searched"><span class="searched-label">確認した箇所</span><a class="file" href="https://github.com/go-gitea/gitea/blob/d5ed7375ce67da861e7d80fb817bdc5418193d17/routers/web/web.go" target="_blank" rel="noopener">routers/web/web.go</a><a class="file" href="https://github.com/go-gitea/gitea/blob/d5ed7375ce67da861e7d80fb817bdc5418193d17/routers/web/shared/actions/scoped_workflows.go" target="_blank" rel="noopener">routers/web/shared/actions/scoped_workflows.go</a></div></li><li><p class="q">サイト管理者向けのActions設定にSecrets管理画面が無いのは、インスタンス全体で共有される機密情報を意図的にサポート対象外としているためか？</p><div class="searched"><span class="searched-label">確認した箇所</span><a class="file" href="https://github.com/go-gitea/gitea/blob/d5ed7375ce67da861e7d80fb817bdc5418193d17/routers/web/web.go" target="_blank" rel="noopener">routers/web/web.go</a><a class="file" href="https://github.com/go-gitea/gitea/blob/d5ed7375ce67da861e7d80fb817bdc5418193d17/routers/web/repo/setting/secrets.go" target="_blank" rel="noopener">routers/web/repo/setting/secrets.go</a></div></li></ul></div>
+<div class="feature-group"><h3>認証(ログイン・2要素認証・OAuth/WebAuthn)</h3><ul class="q-list"><li><p class="q">二要素認証を必須化(enforced)した場合の運用ルール(既存ユーザーの移行期間や猶予の有無)は仕様として定められているか、それとも管理者の裁量に委ねられているか。</p><div class="searched"><span class="searched-label">確認した箇所</span><a class="file" href="https://github.com/go-gitea/gitea/blob/d5ed7375ce67da861e7d80fb817bdc5418193d17/modules/setting/security.go" target="_blank" rel="noopener">modules/setting/security.go</a><a class="file" href="https://github.com/go-gitea/gitea/blob/d5ed7375ce67da861e7d80fb817bdc5418193d17/services/context/context.go" target="_blank" rel="noopener">services/context/context.go</a></div></li></ul></div>
+<div class="feature-group"><h3>Issue管理</h3><ul class="q-list"><li><p class="q">循環依存のチェックが直接の逆方向（1段階）しか見ていないのは意図的な仕様か、それとも間接的な循環（A→B→C→A）も本来検出すべき未実装のバグか？</p><div class="searched"><span class="searched-label">確認した箇所</span><a class="file" href="https://github.com/go-gitea/gitea/blob/d5ed7375ce67da861e7d80fb817bdc5418193d17/models/issues/dependency.go" target="_blank" rel="noopener">models/issues/dependency.go</a><a class="file" href="https://github.com/go-gitea/gitea/blob/d5ed7375ce67da861e7d80fb817bdc5418193d17/routers/web/repo/issue_dependency.go" target="_blank" rel="noopener">routers/web/repo/issue_dependency.go</a></div></li><li><p class="q">クロスリポジトリ依存関係の削除は <code>ALLOW_CROSS_REPOSITORY_DEPENDENCIES</code> が無効でも常に許可される非対称な仕様だが、これは「既存データを消せなくなる事故を防ぐ」意図での設計か？</p><div class="searched"><span class="searched-label">確認した箇所</span><a class="file" href="https://github.com/go-gitea/gitea/blob/d5ed7375ce67da861e7d80fb817bdc5418193d17/routers/web/repo/issue_dependency.go" target="_blank" rel="noopener">routers/web/repo/issue_dependency.go</a></div></li><li><p class="q">MaxPinned（デフォルト3件）をリポジトリごとに変更できる管理画面や設定項目は現状存在しないが、将来リポジトリ単位で可変にする予定はあるか？</p><div class="searched"><span class="searched-label">確認した箇所</span><a class="file" href="https://github.com/go-gitea/gitea/blob/d5ed7375ce67da861e7d80fb817bdc5418193d17/routers/web/repo/issue_pin.go" target="_blank" rel="noopener">routers/web/repo/issue_pin.go</a></div></li></ul></div>
+<div class="feature-group"><h3>通知（Notifications）</h3><ul class="q-list"><li><p class="q">通知のUpdatedByがコメントの投稿者やレビュアーではなく、実際にはシステム操作（自動マージ等）由来の場合、UI上の「誰からの通知か」の表示は何を根拠にしているか？</p><div class="searched"><span class="searched-label">確認した箇所</span><a class="file" href="https://github.com/go-gitea/gitea/blob/d5ed7375ce67da861e7d80fb817bdc5418193d17/templates/user/notification/notification_div.tmpl" target="_blank" rel="noopener">templates/user/notification/notification_div.tmpl</a><a class="file" href="https://github.com/go-gitea/gitea/blob/d5ed7375ce67da861e7d80fb817bdc5418193d17/models/activities/notification.go" target="_blank" rel="noopener">models/activities/notification.go</a></div></li><li><p class="q">メール通知（services/mailer側）は、アプリ内通知と同じイベントに対して同期的に送られるのか、それとも別経路・別条件で判定されるのか？</p><div class="searched"><span class="searched-label">確認した箇所</span><a class="file" href="https://github.com/go-gitea/gitea/blob/d5ed7375ce67da861e7d80fb817bdc5418193d17/routers/web/user/setting/notifications.go" target="_blank" rel="noopener">routers/web/user/setting/notifications.go</a></div></li></ul></div>
+<div class="feature-group"><h3>組織・チームと権限管理</h3><ul class="q-list"><li><p class="q">AnyRepoUnitMaxAccess のコード内コメントで指摘されている「あるリポジトリへのアクセス可否を別リポジトリのものと混同する」不正確さは、実際の権限判定（例えば組織トップページの閲覧可否表示など）にどの程度影響しているか、修正予定はあるか？</p><div class="searched"><span class="searched-label">確認した箇所</span><a class="file" href="https://github.com/go-gitea/gitea/blob/d5ed7375ce67da861e7d80fb817bdc5418193d17/models/organization/team_list.go" target="_blank" rel="noopener">models/organization/team_list.go</a></div></li></ul></div>
+<div class="feature-group"><h3>プルリクエスト・コードレビュー</h3><ul class="q-list"><li><p class="q">承認ホワイトリストやマージホワイトリストにチームを登録した場合、そのチームが削除・改名されたときの既存ルールへの影響(自動的にクリーンアップされるか)はどう運用する想定か?</p><div class="searched"><span class="searched-label">確認した箇所</span><a class="file" href="https://github.com/go-gitea/gitea/blob/d5ed7375ce67da861e7d80fb817bdc5418193d17/models/git/protected_branch.go" target="_blank" rel="noopener">models/git/protected_branch.go</a></div></li><li><p class="q">「手動マージ済みとしてマーク」機能や強制マージ(force merge)の利用状況を監査ログなどで追跡する運用は行っているか?</p><div class="searched"><span class="searched-label">確認した箇所</span><a class="file" href="https://github.com/go-gitea/gitea/blob/d5ed7375ce67da861e7d80fb817bdc5418193d17/routers/web/repo/pull_merge_form.go" target="_blank" rel="noopener">routers/web/repo/pull_merge_form.go</a><a class="file" href="https://github.com/go-gitea/gitea/blob/d5ed7375ce67da861e7d80fb817bdc5418193d17/services/pull/check.go" target="_blank" rel="noopener">services/pull/check.go</a></div></li></ul></div>
+<div class="feature-group"><h3>リポジトリ作成・コード閲覧編集</h3><ul class="q-list"><li><p class="q">「フォークして編集」フローでの新規フォークのリポジトリ名は <code>getUniqueRepositoryName</code> で自動採番されるが、この自動生成された名前をユーザーが後から変更したい場合の想定動線はUI上どこにあるか(このドキュメントの範囲外の可能性)。</p><div class="searched"><span class="searched-label">確認した箇所</span><a class="file" href="https://github.com/go-gitea/gitea/blob/d5ed7375ce67da861e7d80fb817bdc5418193d17/routers/web/repo/editor_util.go" target="_blank" rel="noopener">routers/web/repo/editor_util.go</a><a class="file" href="https://github.com/go-gitea/gitea/blob/d5ed7375ce67da861e7d80fb817bdc5418193d17/routers/web/repo/editor_fork.go" target="_blank" rel="noopener">routers/web/repo/editor_fork.go</a></div></li></ul></div>
+  </section>
+
+  <section>
+    <h2>そのほかの確認事項</h2>
+    <details>
+      <summary>追加で調べれば埋まる可能性があるもの<span class="hint">7件</span></summary>
+      <div class="details-body">
+        <p class="lead">コードを追えば分かるはずで、今回そこまで読めなかった点です。人に聞く前に、もう一度コードを当たってください。</p>
+<div class="feature-group"><h3>Actions（CI/CDワークフロー）</h3><ul class="q-list"><li><p class="q">Connect-RPCによるRunner登録エンドポイント（/api/actions配下）の正確なパス文字列と、Register以外にどのRPCメソッド（タスク取得・結果報告など）が公開されているか？</p></li></ul></div>
+<div class="feature-group"><h3>認証(ログイン・2要素認証・OAuth/WebAuthn)</h3><ul class="q-list"><li><p class="q">ユーザー設定の「アプリケーション」画面(OAuth2アプリの作成・編集ハンドラ、user_setting.OAuthApplicationsPost等)の詳細な承認フロー・スコープ制御はどうなっているか。ルーティングのみ確認し、ハンドラの実装ファイル(routers/web/user/setting配下)は未読のため。</p></li><li><p class="q">管理画面の認証ソース管理(routers/web/web.goの/-/admin/auths、admin.Authentications等)でOAuth2/LDAP/SSPIそれぞれにどんな設定項目・バリデーションがあるか。ハンドラ実体(routers/web/admin配下)は未読のため詳細不明。</p></li><li><p class="q">SSPI(Windows統合認証)は具体的にどのような条件でIsSSPIEnabledがtrueになり、どのミドルウェアで自動ログインが行われるのか。auth.IsSSPIEnabledの呼び出しは確認したが、services/auth/source/sspi配下の実装までは読んでいない。</p></li><li><p class="q">TwoFactorAuthEnforced(2FA必須化)がAPI経由の全操作・全エンドポイントにどこまで及ぶのか(routers/api/v1/api.goのdoerNeedTwoFactorAuthの呼び出し箇所全体)は、api.go全体を読んでいないため未確認。</p></li></ul></div>
+<div class="feature-group"><h3>通知（Notifications）</h3><ul class="q-list"><li><p class="q">NotificationSourceCommit（コミット由来の通知）は現状どの操作から作られるか？ 今回追った services/uinotification/notify.go 内には該当する呼び出しが見つからなかった。</p></li></ul></div>
+<div class="feature-group"><h3>リポジトリ作成・コード閲覧編集</h3><ul class="q-list"><li><p class="q">移行(マイグレーション)対象として選べる外部サービスの一覧(GitHub/GitLab/Gitea/SVN/CodeCommitなど)は <code>structs.SupportedFullGitService</code> で決まっているが、各サービスごとに実際どの項目(Wiki/Issue/PR等)が取り込み可能かの詳細な対応表はコードから追い切れていない。サービスごとの対応項目の一覧はどこかにまとまっているか。</p></li></ul></div>
+      </div>
+    </details>
+    <details>
+      <summary>ドキュメントの範囲についてのメモ<span class="hint">3件</span></summary>
+      <div class="details-body">
+        <p class="lead">機能ドキュメントの範囲についての相談です。ドキュメントを保守する人向けのメモです。</p>
+<div class="feature-group"><h3>組織・チームと権限管理</h3><ul class="q-list"><li><p class="q">組織設定の /org/{org}/worktime（Worktime）画面はこのドキュメントの対象範囲に含めるべきか、それとも別機能（工数管理）として扱うべきか？</p></li></ul></div>
+<div class="feature-group"><h3>プルリクエスト・コードレビュー</h3><ul class="q-list"><li><p class="q">コードオーナー(CODEOWNERS)必須レビューのマッチングルールの詳細仕様(パターンの優先順位など)は、本ドキュメントとは別に独立したドキュメントとして扱うべきか?</p></li></ul></div>
+<div class="feature-group"><h3>リポジトリ作成・コード閲覧編集</h3><ul class="q-list"><li><p class="q">リポジトリ設定画面(<code>/{username}/{reponame}/settings</code>)からの所有者移管の「開始」操作自体は今回読んだ範囲に含まれておらず、<code>repo_setting</code> パッケージ側にあると見られる。移管の開始をこのドキュメントに含めるべきか、別ドキュメント(リポジトリ設定)に任せるべきか。</p></li></ul></div>
+      </div>
+    </details>
+  </section>
+
+  <div class="cta-block">
+    <h2>これを、あなたが入るコードベースで。</h2>
+    <p>Askless は、あなたが書いていないコードから、出典付きの仕様と「聞くべきこと」を起こします。</p>
+    <a class="btn-primary" href="/#waitlist">先行アクセスに登録する</a>
+  </div>
+
+  <footer>
+    <span>Askless — OSS版（spec-bridge）は <a href="https://github.com/Rtaaaaabo/spec-bridge" target="_blank" rel="noopener">GitHub</a> で公開中</span>
+    <span>この出力は <a href="https://github.com/go-gitea/gitea" target="_blank" rel="noopener">gitea</a>（MIT）のコードから生成しています</span>
+  </footer>
+
+</div>
+
+</body>
+</html>
