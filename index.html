@@ -3,8 +3,8 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Askless — 何を聞くべきか、コードが先に教えてくれる。</title>
-<meta name="description" content="あなたが書いていないコードから、出典付きの機能仕様を起こすツール、Askless。確定できないことは推測で埋めず、確認事項として返します。SaaS版の先行アクセスを受付中。">
+<title>Askless — 作るのは、速くなった。確かめるのは、仕様で。</title>
+<meta name="description" content="マージされたPRから、出典付きの機能仕様を起こすツール、Askless。PMやサポートが、コードを読まずに「意図どおりに出来たか」を確かめられます。確定できないことは推測で埋めず、開発チームに聞くこととして返します。SaaS版の先行アクセスを受付中。">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Shippori+Mincho:wght@400;500;600;800&family=Zen+Kaku+Gothic+New:wght@400;500;700;900&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
@@ -279,8 +279,10 @@
   }
 
   @media (max-width: 720px) {
-    .process { grid-template-columns: 1fr; }
+    .process, .process-2 { grid-template-columns: 1fr; }
   }
+
+  .process-2 { grid-template-columns: repeat(2, 1fr); }
 
   .process-step {
     padding-top: 18px;
@@ -455,11 +457,11 @@
 
 <div class="hero wrap">
   <h1>
-    <span class="kicker-line">何を聞くべきか、</span>
-    <span class="kicker-line">コードが先に教えてくれる。</span>
+    <span class="kicker-line">作るのは、速くなった。</span>
+    <span class="kicker-line">確かめるのは、仕様で。</span>
   </h1>
   <p class="lede">
-    初めて開くコードベースでも、コードから確定できることと、できないことは分けられます。Asklessは、あなたが書いていないコードから機能仕様を起こし、すべての記述にソースの該当行を添えます。確定できないことは推測で埋めず、「開発者への確認事項」として一覧にします。顧客や前任者に会う前に、聞くべきことが揃います。
+    生成AIで、作るスピードは上がりました。追いつかなくなったのは、何が出来上がったのかの確認です。Asklessは、マージされたPRから機能仕様を起こし、すべての記述にコードの該当行を添えます。PMやサポートは、コードを読まずに、出来上がったものが意図どおりかを確かめられます。コードから確定できないことは推測で埋めず、「開発チームに聞くこと」として分けて返します。
   </p>
   <div class="cta-row">
     <a class="btn-primary" href="#waitlist">先行アクセスに登録する</a>
@@ -496,14 +498,35 @@
 <section id="pain">
   <div class="wrap">
     <div class="section-head">
-      <h2>最初の打ち合わせ、何を聞くか決まっていますか</h2>
-      <p>読めば分かることを聞くたびに、信頼は少しずつ削れていきます。</p>
+      <h2>作る速さに、確認が追いついていますか</h2>
+      <p>開発と事業のあいだを、同じ確認が何度も行き来しています。</p>
     </div>
     <div class="pain-list">
-      <div class="pain-item"><strong>コードを読めば分かることを、相手に聞いてしまう。</strong></div>
-      <div class="pain-item"><strong>逆に、コードからは分からない意図を、推測で埋めてしまう。</strong></div>
-      <div class="pain-item"><strong>打ち合わせの前に、全部を読む時間はない。</strong></div>
+      <div class="pain-item"><strong>PRは毎日マージされるのに、何が変わったかが事業側に届かない。</strong></div>
+      <div class="pain-item"><strong>「これは仕様どおり？」を確かめるたびに、開発者の手が止まる。</strong></div>
+      <div class="pain-item"><strong>頼んだ仕様と、出来上がったもののズレに、リリースしてから気づく。</strong></div>
       <div class="pain-item"><strong>AIに要約させたら、存在しない設定項目が書いてあった。</strong></div>
+    </div>
+  </div>
+</section>
+
+<section id="flows">
+  <div class="wrap">
+    <div class="section-head">
+      <h2>どちらが先に考えても、仕様で確かめる</h2>
+      <p>作るハードルが下がって、誰が先に仕様を考えるかは、案件ごとに変わるようになりました。</p>
+    </div>
+    <div class="process process-2">
+      <div class="process-step">
+        <span class="num">開発が先に作るとき</span>
+        <h3>PRから起きた仕様を、PM・サポートが読む</h3>
+        <p>開発者が仕様を考えて、PRを出します。マージされると、変わった機能の仕様が届きます。PMやサポートは、それを読んで意図どおりかを確かめ、利用者への案内に使えます。</p>
+      </div>
+      <div class="process-step">
+        <span class="num">PMが先に考えるとき</span>
+        <h3>頼んだとおりに出来たかを、仕様で見比べる</h3>
+        <p>PMが考えた仕様で、開発が実装します。PRから起きた仕様を読めば、頼んだとおりに出来ているかを、コードを読まずに確かめられます。</p>
+      </div>
     </div>
   </div>
 </section>
@@ -517,18 +540,18 @@
     <div class="process">
       <div class="process-step">
         <span class="num">01</span>
-        <h3>リポジトリを渡す</h3>
-        <p>既存のコードベースから、ユーザーに見える機能を洗い出します。解析対象のコードは書き換えません。</p>
+        <h3>リポジトリをつなぐ</h3>
+        <p>いまのコードから、ユーザーに見える機能ごとに仕様を書き起こします。解析対象のコードは書き換えません。</p>
       </div>
       <div class="process-step">
         <span class="num">02</span>
-        <h3>出典付きで仕様を起こす</h3>
-        <p>すべての記述に、ソースの該当行が付きます。出典のない項目は、スキーマの段階で存在できません。</p>
+        <h3>PRのたびに、出典付きで更新する</h3>
+        <p>マージされたPRで変わった機能の仕様を更新します。すべての記述に、ソースの該当行が付きます。出典のない項目は、スキーマの段階で存在できません。</p>
       </div>
       <div class="process-step">
         <span class="num">03</span>
         <h3>分からないことは、分けて返す</h3>
-        <p>コードから確定できないことは推測せず、「開発者への確認事項」に回します。そのあとはPRのマージに合わせて更新されます。</p>
+        <p>コードから確定できないことは推測せず、「開発チームに聞くこと」に回します。答えは仕様に書き戻せます。</p>
       </div>
     </div>
   </div>
@@ -537,13 +560,13 @@
 <section id="compare">
   <div class="wrap">
     <div class="section-head">
-      <h2>読み始めてから、話せるようになるまで</h2>
+      <h2>マージされてから、確かめ終わるまで</h2>
     </div>
     <table class="compare">
       <tr><th>これまで</th><th>Asklessを使うと</th></tr>
-      <tr><td>全部読んでから、質問を考える</td><td>確認事項の一覧から始める</td></tr>
+      <tr><td>何が変わったかを、開発者に聞いて回る</td><td>変わった機能の仕様が、マージのたびに届く</td></tr>
       <tr><td>もっともらしい要約を、自分で裏取りする</td><td>裏は最初から、該当行へのリンクで付いている</td></tr>
-      <tr><td>聞いた答えが、議事録に埋もれる</td><td>答えを仕様に書き戻し、確認済みにできる</td></tr>
+      <tr><td>確かめた答えが、チャットに埋もれる</td><td>答えを仕様に書き戻し、確認済みにできる</td></tr>
     </table>
   </div>
 </section>
@@ -581,10 +604,10 @@
       <input type="hidden" name="ref" id="waitlist-ref" value="">
       <select name="use_case" id="waitlist-use-case" aria-label="主にどんな場面で使いたいですか（任意）">
         <option value="">主にどんな場面で使いたいですか（任意）</option>
-        <option value="fde">顧客先のコードに入る（FDE・受託）</option>
-        <option value="handover">前任者からの引き継ぎ</option>
-        <option value="dd">技術DD・監査</option>
-        <option value="in-house">自社プロダクトのドキュメント</option>
+        <option value="dev-first">開発が作った機能を、PM・サポートが確かめる</option>
+        <option value="spec-first">頼んだ仕様どおりに出来たかを、PRで確かめる</option>
+        <option value="in-house">自社プロダクトの仕様を、最新に保つ</option>
+        <option value="handover">引き継ぎ・初めて読むコードを把握する</option>
         <option value="other">その他</option>
       </select>
       <input type="email" name="email" id="waitlist-email" placeholder="you@example.com" required aria-label="メールアドレス">
